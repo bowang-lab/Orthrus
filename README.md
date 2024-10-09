@@ -5,11 +5,9 @@
 
 Orthrus is a mature RNA model for RNA property prediction. It uses a Mamba encoder backbone, a variant of state-space models specifically designed for long-sequence data, such as RNA. 
 
-</div>
-<div style="flex: 1; margin-left: 20px;">
-<img src="orthrus.png" alt="Orthrus Model Overview" style="max-width: 40%; height: auto;">
-</div>
-</div>
+<p align="center">
+  <img src="orthrus.png" alt="Orthrus Model Overview" width="500">
+</p>
 
 Two versions of Orthrus are available:
 
