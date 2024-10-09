@@ -3,11 +3,11 @@
 <div style="display: flex; align-items: flex-start;">
 <div style="flex: 1;">
 
-Orthrus is a mature RNA model for RNA property prediction. It uses a mamba encoder backbone, a variant of state-space models specifically designed for long-sequence data, such as RNA. 
+Orthrus is a mature RNA model for RNA property prediction. It uses a Mamba encoder backbone, a variant of state-space models specifically designed for long-sequence data, such as RNA. 
 
 </div>
 <div style="flex: 1; margin-left: 20px;">
-<img src="orthrus.png" alt="Orthrus Model Overview" style="max-width: 60%; height: auto;">
+<img src="orthrus.png" alt="Orthrus Model Overview" style="max-width: 40%; height: auto;">
 </div>
 </div>
 
@@ -17,11 +17,11 @@ Two versions of Orthrus are available:
 - 6-track large version: Adds biological context by including splice site indicators and coding sequence markers, which is crucial for accurate mRNA property prediction such as RNA half-life, ribosome load, and exon junction detection.
 
 **Why the Mamba Backbone?**
-The mamba architecture is an extension of the S4 (structured state-space) model family, which excels at handling long sequences like mRNAs that can reach over 12,000 nucleotides. This makes it an ideal fit for RNA property prediction models for several reasons:
+The Mamba architecture is an extension of the S4 (structured state-space) model family, which excels at handling long sequences like mRNAs that can reach over 12,000 nucleotides. This makes it an ideal fit for RNA property prediction models for several reasons:
 
-- _Efficient Memory Usage:_ Unlike transformers, which require quadratic memory scaling with sequence length, the mamba backbone scales linearly, making it computationally efficient for long sequences.
-- _Variable Context Filtering:_ RNA sequences often contain functionally relevant motifs separated by variable spacing. The mamba model is capable of selectively focusing on these important elements
-- _Selective Context Compression:_ Genomic sequences often have uneven information density, with critical regulatory elements scattered across regions of varying importance. The mamba model selectively compresses less informative regions while preserving the context of key functional areas
+- _Efficient Memory Usage:_ Unlike transformers, which require quadratic memory scaling with sequence length, the Mamba backbone scales linearly, making it computationally efficient for long sequences.
+- _Variable Context Filtering:_ RNA sequences often contain functionally relevant motifs separated by variable spacing. The Mamba model is capable of selectively focusing on these important elements
+- _Selective Context Compression:_ Genomic sequences often have uneven information density, with critical regulatory elements scattered across regions of varying importance. The Mamba model selectively compresses less informative regions while preserving the context of key functional areas
 
 ## Using Orthrus
 
