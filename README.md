@@ -7,7 +7,7 @@ Orthrus is a mature RNA model for RNA property prediction. It uses a mamba encod
 
 </div>
 <div style="flex: 1; margin-left: 20px;">
-<img src="images/orthrus_cleaned_up.png" alt="Orthrus Model Overview" style="max-width: 60%; height: auto;">
+<img src="orthrus.png" alt="Orthrus Model Overview" style="max-width: 60%; height: auto;">
 </div>
 </div>
 
@@ -59,6 +59,11 @@ wget -O starter_build.sh https://raw.githubusercontent.com/deepgenomics/GenomeKi
 chmod +x starter_build.sh
 # Run the script to download genomes and annotations
 ./starter_build.sh
+```
+
+5. Install orthrus package so you can perform import
+```bash
+pip install -e .
 ```
 
 Now you're ready to use Orthrus for generating embeddings!
@@ -149,3 +154,51 @@ We can now generate six track encodings for any transcript!
 ```
 
 Alternatively, this information can be extracted from genePred files available for download from the UCSC Genome Browser [here](https://genome.ucsc.edu/cgi-bin/hgTables).
+
+### Fine-Tuning Orthrus
+
+To fine tune orthrus you can use the pre-specified configurations lockated in `./orthrus/rna_task_config` for data, model, optimizer, projector, and training parameters. Here is an example command that will fine tune Orthrus on an RNA half-life dataset:
+
+cd orthrus 
+
+```bash
+python rna_task_train.py \
+--model_config mamba_pre_base \
+--train_config bs_64_short_run \
+--projector_config default_256 \
+--data_config rna_hl \
+--optimizer_config no_wd_1e-3 \
+--seed_override 0 
+```
+
+Before running the command please remember to update your data storage directory and your model weights directory in configs.
+
+If you're interested in running data ablation experiments simply use one of the configured data configurations in `./orthrus/rna_task_config` or create a new one. Here is an example of fine tuning GO classification with 10 percent of the data.
+
+```bash
+python rna_task_train.py \
+--model_config mamba_pre_base \
+--train_config bs_64_1000_steps \
+--projector_config default_256_go \
+--data_config go_mf_dataset_10pct \
+--optimizer_config no_wd_1e-3_100_warmup \
+--seed_override 0 
+```
+
+### Linear Probing
+
+Similarly for linear probing:
+
+```bash
+python linear_probe_eval.py \
+--run_name orthrus_large_6_track \
+--model_name="epoch=22-step=20000.ckpt" \
+--model_repository="/scratch/hdd001/home/phil/msk_backup/runs/" \
+--npz_dir="/fs01/home/phil/Documents/01_projects/rna_rep/linear_probe_data2" \
+--verbose 1 \
+--n_seeds 1 \
+--n_tracks 6 \
+--load_state_dict=true \
+--full_eval \
+--homology_split=true 
+```

@@ -1,0 +1,61 @@
+resnet_base: &resnet_base
+  model_class: "resnet"
+  num_classes: 1
+  pooling_layer: "max_pool"
+  add_shift: True
+  increase_dilation: False
+  resnet: "dilated_small"
+  norm_type: "batchnorm"
+  kernel_size: 2
+  global_pooling_layer: "dynamic_avgpool"
+  dropout_prob: 0.3
+  model_name: null
+  model_repository: null
+  run_name: null
+
+mamba_base: &mamba_base
+  model_class: "ssm"
+  ssm_model_dim: 256
+  ssm_n_layers: 3
+  model_name: null
+  model_repository: null
+  run_name: null
+
+mamba_large: &mamba_large
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 6
+  model_name: null
+  model_repository: null
+  run_name: null
+
+mamba_pre_base:
+  <<: *mamba_base
+  model_name: "latest"
+  model_repository: "/scratch/hdd001/home/ruiashi/msk_backup/grid_runs/" 
+  run_name: "ssm_6t_3_256_lr0.001_wd1e-05_mask0.15_splice_all_basic_eutheria"
+
+mamba_pre_base_4t:
+  <<: *mamba_base
+  model_name: "latest"
+  model_repository: "/scratch/hdd001/home/phil/msk_backup/grid_runs/" 
+  run_name: "ssm_4t_3_256_lr0.001_wd1e-05_mask0.15_splice_all_basic_eutheria"
+
+
+mamba_pre_large:
+  <<: *mamba_large
+  model_name: "latest"
+  model_repository: "/scratch/hdd001/home/ruiashi/msk_backup/runs/" 
+  run_name: "ssm_6_512_lr0.001_wd5e-05_mask0.15_seed0_splice_all_basic_eutheria_gene-dict"
+
+
+saluki: &saluki
+  model_class: "saluki"
+  model_name: null
+  model_repository: null
+  run_name: null
+  add_shift: True
+
+saluki_no_shift:
+  <<: *saluki
+  add_shift: False

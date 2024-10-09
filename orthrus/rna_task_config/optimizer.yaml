@@ -1,0 +1,234 @@
+default: &default
+  model_lr: 0.001
+  model_weight_decay: 0.0001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: "norm"
+  warmup_steps: 1000
+  scheduler: "warmup_cosine"
+  optimizer: "adamw"
+  explicit_weight_decay: 0.
+
+high_reg: &high_reg
+  model_lr: 0.001
+  model_weight_decay: 0.001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.001
+  gradient_clip_val: 0.5
+  warmup_steps: 1000
+  gradient_clip_algorithm: "norm"
+  scheduler: "warmup_cosine"
+  optimizer: "adamw"
+  explicit_weight_decay: 0.
+
+low_reg: &low_reg
+  model_lr: 0.001
+  model_weight_decay: 0.00001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.00001
+  gradient_clip_val: 5.0
+  warmup_steps: 1000
+  gradient_clip_algorithm: "norm"
+  scheduler: "warmup_cosine"
+  optimizer: "adamw"
+  explicit_weight_decay: 0.
+
+no_wd: &no_wd
+  model_lr: 0.001
+  model_weight_decay: 0
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0
+  gradient_clip_val: 10.0
+  warmup_steps: 1000
+  gradient_clip_algorithm: "norm"
+  scheduler: "warmup_cosine"
+  optimizer: "adamw"
+  explicit_weight_decay: 0.
+
+saluki: &saluki
+  model_lr: 0.0001
+  model_weight_decay: 0
+  projection_head_lr: 0.0001
+  projection_head_weight_decay: 0
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "norm"
+  warmup_steps: 1000
+  scheduler: ""
+  optimizer: "adam"
+  explicit_weight_decay: 0.0001
+
+# ------------------------ default reg ------------------------
+default_3e-3:
+  <<: *default
+  model_lr: 0.003
+  projection_head_lr: 0.003
+
+default_1e-3:
+  <<: *default
+  model_lr: 0.001
+  projection_head_lr: 0.001
+
+default_1e-4:
+  <<: *default
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+
+# ------------------------ high reg ------------------------
+high_reg_1e-4:
+  <<: *high_reg
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+
+high_reg_1e-4_100_warmup:
+  <<: *high_reg
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+  warmup_steps: 100
+
+high_reg_1e-4_10_warmup:
+  <<: *high_reg
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+  warmup_steps: 10
+
+high_reg_1e-3:
+  <<: *high_reg
+  model_lr: 0.001
+  projection_head_lr: 0.001
+
+high_reg_3e-4:
+  <<: *high_reg
+  model_lr: 0.003
+  projection_head_lr: 0.003
+
+high_reg_1e-3_100_warmup:
+  <<: *high_reg
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  warmup_steps: 100
+
+high_reg_1e-3_10_warmup:
+  <<: *high_reg
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  warmup_steps: 10
+
+high_reg_1e-4_no_sched:
+  <<: *high_reg
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+  scheduler: null
+
+high_reg_1e-2:
+  <<: *high_reg
+  model_lr: 0.01
+  projection_head_lr: 0.01
+
+# ------------------------ low reg ------------------------
+low_reg_1e-3:
+  <<: *low_reg
+  model_lr: 0.001
+  projection_head_lr: 0.001
+
+low_reg_1e-4:
+  <<: *low_reg
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+
+# ------------------------ no wd ------------------------
+no_wd_1e-4:
+  <<: *no_wd
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+
+no_wd_3e-5:
+  <<: *no_wd
+  model_lr: 0.00003
+  projection_head_lr: 0.00003
+
+no_wd_1e-3:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+
+no_wd_1e-3_100_warmup:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  warmup_steps: 100
+
+no_wd_1e-3_10_warmup:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  warmup_steps: 10
+
+no_wd_1e-3:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+
+no_wd_1e-4:
+  <<: *no_wd
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+
+no_wd_1e-4_400_warmup:
+  <<: *no_wd
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+  warmup_steps: 400
+
+no_wd_1e-4_40_warmup:
+  <<: *no_wd
+  model_lr: 0.0001
+  projection_head_lr: 0.0001
+  warmup_steps: 10
+  gradient_clip_val: 40.0
+
+no_wd_1e-3_clip_0.5:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "value"
+
+no_wd_1e-3_40_warmup_clip_0.5:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  warmup_steps: 40
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "value"
+
+no_wd_1e-3_400_warmup_clip_0.5:
+  <<: *no_wd
+  model_lr: 0.001
+  projection_head_lr: 0.001
+  warmup_steps: 400
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "value"
+
+no_wd_3e-4_clip_0.5:
+  <<: *no_wd
+  model_lr: 0.0003
+  projection_head_lr: 0.0003
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "value"
+
+no_wd_3e-4_40_warmup_clip_0.5:
+  <<: *no_wd
+  model_lr: 0.0003
+  projection_head_lr: 0.0003
+  warmup_steps: 40
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "value"
+
+no_wd_3e-4_400_warmup_clip_0.5:
+  <<: *no_wd
+  model_lr: 0.0003
+  projection_head_lr: 0.0003
+  warmup_steps: 400
+  gradient_clip_val: 0.5
+  gradient_clip_algorithm: "value"

@@ -1,0 +1,322 @@
+base_data: &base
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 1.0
+
+base_4_track: &base_4_track
+  split_type: homology
+  species: human
+  n_tracks: 4
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 1.0
+
+base_50pct: &base_50pct
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 0.5
+
+base_30pct: &base_30pct
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 0.3
+
+base_10pct: &base_10pct
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 0.1
+
+base_3pct: &base_3pct
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 0.03
+
+
+base_1pct: &base_1pct
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 0.01
+
+base_05pct: &base_05pct
+  split_type: homology
+  species: human
+  n_tracks: 6
+  data_dir: /fs01/projects/isoclr/linear_probe_data2
+  subset_n_samples: null
+  subset_fraction: 0.005
+
+# ----------------------- RNA HL Human -----------------------
+rna_hl:
+  <<: *base
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 6
+  task: regression
+
+rna_hl_4_track:
+  <<: *base_4_track
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 4
+  task: regression
+
+rna_hl_30pct:
+  <<: *base_30pct
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 6
+  task: regression
+
+rna_hl_10pct:
+  <<: *base_10pct
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 6
+  task: regression
+
+rna_hl_3pct:
+  <<: *base_3pct
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 6
+  task: regression
+
+
+rna_hl_1pct:
+  <<: *base_1pct
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 6
+  task: regression
+
+rna_hl_05pct:
+  <<: *base_05pct
+  dataset_name: rna_hl_human.npz
+  species: human
+  n_tracks: 6
+  task: regression
+
+rna_hl_random:
+  <<: *base
+  dataset_name: rna_hl_human.npz
+  species: human
+  task: regression
+  n_tracks: 6
+  split_type: random
+# ----------------------- RNA HL Mouse -----------------------
+rna_hl_mouse:
+  <<: *base
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 6
+  task: regression
+
+rna_hl_mouse_4_track:
+  <<: *base_4_track
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 4
+  task: regression
+
+rna_hl_mouse_30pct:
+  <<: *base_30pct
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 6
+  task: regression
+
+rna_hl_mouse_10pct:
+  <<: *base_10pct
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 6
+  task: regression
+
+rna_hl_mouse_3pct:
+  <<: *base_3pct
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 6
+  task: regression
+
+rna_hl_mouse_1pct:
+  <<: *base_1pct
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 6
+  task: regression
+
+rna_hl_mouse_05pct:
+  <<: *base_05pct
+  dataset_name: rna_hl_mouse.npz
+  species: mouse
+  n_tracks: 6
+  task: regression
+
+# ------------------------ MRL ------------------------
+mrl_isoform_resolved:
+  <<: *base
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 6
+
+mrl_isoform_resolved_4_track:
+  <<: *base_4_track
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 4
+
+mrl_isoform_resolved_30pct:
+  <<: *base_30pct
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 6
+
+mrl_isoform_resolved_10pct:
+  <<: *base_10pct
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 6
+
+mrl_isoform_resolved_3pct:
+  <<: *base_3pct
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 6
+
+mrl_isoform_resolved_1pct:
+  <<: *base_1pct
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 6
+
+mrl_isoform_resolved_05pct:
+  <<: *base_05pct
+  dataset_name: mrl_isoform_resolved.npz
+  task: regression
+  species: human
+  n_tracks: 6
+
+# ------------------------ GO -------------------------
+go_mf_dataset:
+  <<: *base
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+go_mf_dataset_4_track:
+  <<: *base_4_track
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 4
+
+go_mf_dataset_30pct:
+  <<: *base_30pct
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+go_mf_dataset_10pct:
+  <<: *base_10pct
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+go_mf_dataset_3pct:
+  <<: *base_3pct
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+go_mf_dataset_1pct:
+  <<: *base_1pct
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+go_mf_dataset_05pct:
+  <<: *base_05pct
+  dataset_name: go_dna_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+# ------------ Protein Localization------------ 
+protein_localization:
+  <<: *base
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+protein_localization_4_track:
+  <<: *base_4_track
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 4
+
+protein_localization_30pct:
+  <<: *base_30pct
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+protein_localization_10pct:
+  <<: *base_10pct
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+protein_localization_3pct:
+  <<: *base_3pct
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+protein_localization_1pct:
+  <<: *base_1pct
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6
+
+protein_localization_05pct:
+  <<: *base_05pct
+  dataset_name: protein_localization_dataset.npz
+  task: classification
+  species: human
+  n_tracks: 6

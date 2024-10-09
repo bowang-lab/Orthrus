@@ -1,0 +1,88 @@
+default: &default
+  projection_body: 256
+  projection_head_size: 1
+  projection_norm_type: batchnorm
+  n_layers: 2
+  output_bias: True
+  output_sigmoid: False
+
+default_ln: &default_ln
+  projection_body: 256
+  projection_head_size: 1
+  projection_norm_type: layernorm
+  n_layers: 2
+  output_bias: True
+  output_sigmoid: False
+
+default_protein_loc: &default_protein_loc
+  projection_body: 256
+  projection_head_size: 12
+  projection_norm_type: batchnorm
+  n_layers: 2
+  output_bias: True
+  output_sigmoid: True
+
+default_go: &default_go
+  projection_body: 256
+  projection_head_size: 10
+  projection_norm_type: batchnorm
+  n_layers: 2
+  output_bias: True
+  output_sigmoid: True
+
+# ----------------------- 256 -----------------------
+default_ln_256:
+  <<: *default_ln
+  representation_dim: 256
+
+
+default_256:
+  <<: *default
+  representation_dim: 256
+
+default_256_go:
+  <<: *default_go
+  representation_dim: 256
+
+default_256_protein_loc:
+  <<: *default_protein_loc
+  representation_dim: 256
+
+
+# ----------------------- 512 -----------------------
+default_512:
+  <<: *default
+  representation_dim: 512
+
+
+default_ln_512:
+  <<: *default_ln
+  representation_dim: 512
+
+default_512_go:
+  <<: *default_go
+  representation_dim: 512
+
+default_512_protein_loc:
+  <<: *default_protein_loc
+  representation_dim: 512
+
+# ----------------------- Saluki -----------------------
+
+saluki_projector:
+  <<: *default
+  representation_dim: 64
+  n_layers: 1
+  output_bias: True
+
+saluki_projector_protein_loc:
+  <<: *default_protein_loc
+  representation_dim: 64
+  n_layers: 1
+  output_bias: True
+
+saluki_projector_go:
+  <<: *default_go
+  representation_dim: 64
+  n_layers: 1
+  output_bias: True

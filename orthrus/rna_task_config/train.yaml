@@ -1,0 +1,141 @@
+default: &default_phil
+  rand_seed: 0
+  mixed_precision: True
+  wandb_run_dir: "/scratch/hdd001/home/phil/rna_contrast/runs"
+  verbose: 2
+
+default_full_precision: &default_full_precision
+  rand_seed: 0
+  mixed_precision: False
+  wandb_run_dir: "/scratch/hdd001/home/phil/rna_contrast/runs"
+  verbose: 2
+
+
+bs_128:
+  <<: *default_phil
+  gpu_batch_sizes: [128, 256]
+  number_steps: 6_000
+
+bs_64:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 12_000
+
+
+bs_64_100k_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 100_000
+
+
+bs_64_30k_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 30_000
+
+bs_64_10k_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 10_000
+
+bs_64_12k_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 12_000
+
+bs_64_3k_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 3_000
+
+bs_64_short_run:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 6_000
+
+bs_64_short_run_full_precision:
+  <<: *default_full_precision
+  gpu_batch_sizes: [64, 256]
+  number_steps: 6_000
+
+bs_64_1000_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 1_000
+
+bs_64_100_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 100
+
+bs_64_long_run:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 30_000
+
+bs_64_long_run_10k:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 10_000
+
+bs_64_300_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [64, 256]
+  number_steps: 300
+
+# ------------------------bs32------------------------
+
+bs_32:
+  <<: *default_phil
+  gpu_batch_sizes: [32, 256]
+  number_steps: 24_000
+
+bs_32_short_run:
+  <<: *default_phil
+  gpu_batch_sizes: [32, 128]
+  number_steps: 12_000
+
+bs_32_short_run_mix_precision:
+  <<: *default_full_precision
+  gpu_batch_sizes: [32, 128]
+  number_steps: 12_000
+
+bs_32_2000_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [32, 128]
+  number_steps: 2_000
+
+bs_32_200_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [32, 128]
+  number_steps: 200
+
+# ------------------------bs16------------------------
+
+bs_16_short_run:
+  <<: *default_phil
+  gpu_batch_sizes: [16, 128]
+  number_steps: 24_000
+
+bs_16_2000_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [16, 128]
+  number_steps: 4_000
+
+bs_16_200_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [16, 128]
+  number_steps: 400
+
+# ------------------------bs8------------------------
+
+bs_8_800_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [8, 128]
+  number_steps: 800
+
+
+bs_8_400_steps:
+  <<: *default_phil
+  gpu_batch_sizes: [8, 128]
+  number_steps: 400
