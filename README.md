@@ -40,10 +40,9 @@ The Mamba architecture is an extension of the S4 (structured state-space) model 
 - _Variable Context Filtering:_ RNA sequences often contain functionally relevant motifs separated by variable spacing. The Mamba model is capable of selectively focusing on these important elements
 - _Selective Context Compression:_ Genomic sequences often have uneven information density, with critical regulatory elements scattered across regions of varying importance. The Mamba model selectively compresses less informative regions while preserving the context of key functional areas
 
-
-<p float="left">
-  <img align="top" align="middle" width="40%" src="assets/Orthrus_movie.m4v" style="display: inline-block; margin: 0 auto; max-width: 300px"/>
-</p>
+<div style="text-align: center;">
+  <img src="assets/Orthrus_movie.gif" width="80%" style="max-width: 800px;">
+</div>
 
 ## Using Orthrus
 
