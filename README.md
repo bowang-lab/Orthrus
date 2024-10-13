@@ -1,13 +1,32 @@
+<div align="center">
+
+# Orthrus: Towards Evolutionary and Functional RNA Foundation Models
+
+[![Jekyll](https://img.shields.io/badge/Science_Explainer-C00?logo=jekyll&logoColor=fff)](https://philechka.com/science/orthrus)
+[![bioRxiv](https://img.shields.io/badge/bioRxiv-2024.10.10.617658-b31b1b.svg)](https://www.biorxiv.org/content/10.1101/2024.10.10.617658v1)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-FFD21E?logo=huggingface&logoColor=000)](https://huggingface.co/antichronology/orthrus/blob/main/README.md)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13910050.svg)](https://doi.org/10.5281/zenodo.13910050)
+[![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/bowang-lab/Orthrus/blob/main/LICENSE.md)
+
+[![python](https://img.shields.io/badge/-Python_3.10-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3100/)
+[![pytorch](https://img.shields.io/badge/PyTorch_2.2+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
+[![lightning](https://img.shields.io/badge/-Lightning_2.4+-792ee5?logo=pytorchlightning&logoColor=white)](https://pytorchlightning.ai/)
+
+<div align="center">
+
+
+<p align="center">
+  <img src="./assets/orthrus.png" alt="Orthrus Model Overview" width="500">
+</p>
+
+<div align="left">
+
 ## Model Overview
 
 <div style="display: flex; align-items: flex-start;">
 <div style="flex: 1;">
 
 Orthrus is a mature RNA model for RNA property prediction. It uses a Mamba encoder backbone, a variant of state-space models specifically designed for long-sequence data, such as RNA. 
-
-<p align="center">
-  <img src="orthrus.png" alt="Orthrus Model Overview" width="500">
-</p>
 
 Two versions of Orthrus are available:
 
@@ -20,6 +39,11 @@ The Mamba architecture is an extension of the S4 (structured state-space) model 
 - _Efficient Memory Usage:_ Unlike transformers, which require quadratic memory scaling with sequence length, the Mamba backbone scales linearly, making it computationally efficient for long sequences.
 - _Variable Context Filtering:_ RNA sequences often contain functionally relevant motifs separated by variable spacing. The Mamba model is capable of selectively focusing on these important elements
 - _Selective Context Compression:_ Genomic sequences often have uneven information density, with critical regulatory elements scattered across regions of varying importance. The Mamba model selectively compresses less informative regions while preserving the context of key functional areas
+
+
+<p float="left">
+  <img align="top" align="middle" width="40%" src="assets/Orthrus_movie.m4v" style="display: inline-block; margin: 0 auto; max-width: 300px"/>
+</p>
 
 ## Using Orthrus
 
@@ -153,7 +177,10 @@ We can now generate six track encodings for any transcript!
 
 Alternatively, this information can be extracted from genePred files available for download from the UCSC Genome Browser [here](https://genome.ucsc.edu/cgi-bin/hgTables).
 
+
 ### Fine-Tuning Orthrus
+
+All the data for fine tuning, linear probing, and homology splitting is available at this zenodo link: https://zenodo.org/records/13910050 
 
 To fine tune orthrus you can use the pre-specified configurations lockated in `./orthrus/rna_task_config` for data, model, optimizer, projector, and training parameters. Here is an example command that will fine tune Orthrus on an RNA half-life dataset:
 
@@ -199,4 +226,16 @@ python linear_probe_eval.py \
 --load_state_dict=true \
 --full_eval \
 --homology_split=true 
+```
+
+```
+@article{orthrus_fradkin_shi_2024,
+  title = {Orthrus: Towards Evolutionary and Functional RNA Foundation Models},
+  url = {http://dx.doi.org/10.1101/2024.10.10.617658},
+  DOI = {10.1101/2024.10.10.617658},
+  publisher = {Cold Spring Harbor Laboratory},
+  author = {Fradkin,  Philip and Shi,  Ruian and Isaev,  Keren and Frey,  Brendan J and Morris,  Quaid and Lee,  Leo J and Wang,  Bo},
+  year = {2024},
+  month = oct 
+}
 ```
