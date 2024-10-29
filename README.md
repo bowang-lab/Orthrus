@@ -93,14 +93,14 @@ Now you're ready to use Orthrus for generating embeddings!
 
 #### 4-Track Model
 
-The 4-track model requires only a one-hot encoded sequence of your mRNA. This representation captures the basic nucleotide information of the mRNA sequence.
+The 4-track model requires only a one-hot encoded sequence of your mRNA. This representation captures the basic nucleotide information of the mRNA sequence. We recommend using the bigger and more capable 6 track model when possible.
 
 Here is example code
 ```
 # Sequence for short mRNA
-> seq=(
+>>> seq=(
 'TCATCTGGATTATACATATTTCGCAATGAAAGAGAGGAAGAAAAGGAAGCAGCAAAATATGTGGAGGCCCA'
- 'ACAAAAGAGACTAGAAGCCTTATTCACTAAAATTCAGGAGGAATTTGAAGAACATGAAGTTACTTCCTCC
+ 'ACAAAAGAGACTAGAAGCCTTATTCACTAAAATTCAGGAGGAATTTGAAGAACATGAAGTTACTTCCTCC'
  'ACTGAAGTCTTGAACCCCCCAAAGTCATCCATGAGGGTTGGAATCAACTTCTGAAAACACAACAAAACCA'
  'TATTTACCATCACGTGCACTAACAAGACAGCAAGTTCGTGCTTTGCAAGATGGTGCAGAGCTTTATGAAG'
  'CAGTGAAGAATGCAGCAGACCCAGCTTACCTTGAGGGTTATTTCAGTGAAGAGCAGTTAAGAGCCTTGAA'
@@ -108,24 +108,24 @@ Here is example code
  'TCTGCTGAACAAAAGGAACAAGGTTTATCAAGGGATGTCACAACCGTGTGGAAGTTGCGTATTGTAAGCTATTC'
 )
 # One hot encode function
-> oh = seq_to_oh(seq)
-> one_hot = seq_to_oh(seq)
-> one_hot = one_hot.T
-> torch_one_hot = torch.tensor(one_hot, dtype=torch.float32)
-> torch_one_hot = torch_one_hot.unsqueeze(0)
-> print(torch_one_hot.shape)
-> torch_one_hot = torch_one_hot.to(device='cuda')
-> lengths = torch.tensor([torch_one_hot.shape[2]]).to(device='cuda')
+>>> oh = seq_to_oh(seq)
+>>> one_hot = seq_to_oh(seq)
+>>> one_hot = one_hot.T
+>>> torch_one_hot = torch.tensor(one_hot, dtype=torch.float32)
+>>> torch_one_hot = torch_one_hot.unsqueeze(0)
+>>> print(torch_one_hot.shape)
+>>> torch_one_hot = torch_one_hot.to(device='cuda')
+>>> lengths = torch.tensor([torch_one_hot.shape[2]]).to(device='cuda')
 # Load Orthrus
-> run_name="orthrus_base_4_track"
-> checkpoint="epoch=18-step=20000.ckpt"
-> model_repository="./models"
-> model = load_model(f"{model_repository}{run_name}", checkpoint_name=checkpoint)
-> model = model.to(torch.device('cuda'))
-> print(model)
+>>> run_name="orthrus_base_4_track"
+>>> checkpoint="epoch=18-step=20000.ckpt"
+>>> model_repository="./models"
+>>> model = load_model(f"{model_repository}{run_name}", checkpoint_name=checkpoint)
+>>> model = model.to(torch.device('cuda'))
+>>> print(model)
 # Generate embedding
-> reps = model.representation(torch_one_hot, lengths)
-> print(reps.shape)
+>>> reps = model.representation(torch_one_hot, lengths)
+>>> print(reps.shape)
 # torch.Size([1, 256])
 ```
 
@@ -148,29 +148,29 @@ chmod +x starter_build.sh
 We can now generate six track encodings for any transcript!
 ```
 # import Genome, Interval, instantiate Genome
-> genome = Genome("gencode.v29")
-> interval = Interval("chr7", "+", 117120016, 117120201, genome)
-> genome.dna(interval)
+>>> genome = Genome("gencode.v29")
+>>> interval = Interval("chr7", "+", 117120016, 117120201, genome)
+>>> genome.dna(interval)
 # CTCTTATGCTCGGGTGATCC
 
 # Load Orthrus 6 track
-> run_name="orthrus_large_6_track"
-> checkpoint="epoch=22-step=20000.ckpt"
-> model_repository="./models"
-> model = load_model(f"{model_repository}{run_name}", checkpoint_name=checkpoint)
-> model = model.to(torch.device('cuda'))
-> print(model)
+>>> run_name="orthrus_large_6_track"
+>>> checkpoint="epoch=22-step=20000.ckpt"
+>>> model_repository="./models"
+>>> model = load_model(f"{model_repository}{run_name}", checkpoint_name=checkpoint)
+>>> model = model.to(torch.device('cuda'))
+>>> print(model)
 # Generate embedding
-> transcripts = find_transcript_by_gene_name(genome, 'BCL2L1')
-> print(transcripts)
-> t = transcripts[0]
-> sixt = create_six_track_encoding(t)
-> sixt = torch.tensor(sixt, dtype=torch.float32)
-> sixt = sixt.unsqueeze(0)
-> sixt = sixt.to(device='cuda')
-> lengths = torch.tensor([sixt.shape[2]]).to(device='cuda')
-> embedding = model.representation(sixt, lengths)
-> print(embedding.shape)
+>>> transcripts = find_transcript_by_gene_name(genome, 'BCL2L1')
+>>> print(transcripts)
+>>> t = transcripts[0]
+>>> sixt = create_six_track_encoding(t)
+>>> sixt = torch.tensor(sixt, dtype=torch.float32)
+>>> sixt = sixt.unsqueeze(0)
+>>> sixt = sixt.to(device='cuda')
+>>> lengths = torch.tensor([sixt.shape[2]]).to(device='cuda')
+>>> embedding = model.representation(sixt, lengths)
+>>> print(embedding.shape)
 # torch.Size([1, 512])
 ```
 
