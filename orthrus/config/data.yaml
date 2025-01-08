@@ -1,0 +1,190 @@
+base_data: &base
+  base_genome_annot_path: "/scratch/morrisq/ian/rna_contrast/data/ref_annotations"
+  base_genome_fasta_path: "/scratch/morrisq/ian/rna_contrast/data/ref_fastas"
+  transcript_save_dir: "/scratch/morrisq/ian/rna_contrast/transcript_data"
+  transcript_map_save_dir: "/scratch/morrisq/ian/rna_contrast/t_map_data"
+  n_tracks: 6
+  zero_pad: True
+  zero_mean: False
+  pad_length_to: 0
+  always_different_transcripts: False
+  transcript_transcript: True
+  proportion_to_mask: 0.15
+
+paralog:
+  <<: *base
+  base_genome_set_path: "/home/shir2/rna_rep/data/default_ref_species.csv"
+  add_paralogs: True
+  ortholog_path: null
+
+ortholog_primate:
+  <<: *base
+  base_genome_set_path: "/home/shir2/rna_rep/data/default_ref_species.csv"
+  add_paralogs: True
+  ortholog_path: "/scratch/morrisq/ian/rna_contrast/data/zoonomia/human_hg38_reference/Primates_orthologs.csv"
+
+ortholog_primate_only:
+  <<: *base
+  add_paralogs: False
+  base_genome_set_path: "/home/shir2/rna_rep/data/ortho_only.csv"
+  ortholog_path: "/scratch/morrisq/ian/rna_contrast/data/zoonomia/human_hg38_reference/Primates_orthologs.csv"
+
+new_base_data: &new_base
+  transcript_save_dir: "/data1/morrisq/ian/rna_contrast/transcripts"
+  n_tracks: 6
+  proportion_to_mask: 0
+
+ortholog_only_primates:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/Primates_merged_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/Primates_merged_longer_pruned.pkl"
+
+ortholog_only_carnivora:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/Carnivora_merged_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/Carnivora_merged_longer_pruned.pkl"
+
+
+ortholog_only_carnivora_primate:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/CarnPrim_merged_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/CarnPrim_merged_longer_pruned.pkl"
+  proportion_to_mask: 0.15
+
+dummy:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/dummy_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/dummy_longer_pruned.pkl"
+  proportion_to_mask: 0.15
+
+splice_carnivora_primate:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceCarnPrim_merged_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceCarnPrim_merged_longer_pruned.pkl"
+
+splice_only:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/Splice_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/Splice_longer_pruned.pkl"
+
+splice_basic_carnivora_primate:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasicCarnPrim_merged_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasicCarnPrim_merged_longer_pruned.pkl"
+
+splice_basic_only:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasic_shorter_pruned.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasic_longer_pruned.pkl"
+
+splice_basic_only_unfiltered:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasic_longer.pkl"
+
+splice_basic_carnivora_primate_unfiltered:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasicCarnPrim_merged_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/SpliceBasicCarnPrim_merged_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_comp_only:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_longer.pkl"
+
+splice_all_basic_eutheria:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_all_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_all_basic_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_all_basic_eutheria_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_all_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_all_basic_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_two_basic_eutheria:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_two_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_two_basic_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_two_basic_eutheria_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_two_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/COMB-eutheria-splice_two_basic_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_two_basic:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_basic_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_two_basic_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_basic_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_all_basic:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_basic_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_all_basic_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_basic_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_basic_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_all_none_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_none_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_none_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_all_none:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_none_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_none_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_two_none_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_none_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_none_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_two_none:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_none_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_none_longer.pkl"
+  proportion_to_mask: 0.15
+
+eutheria_only:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/ORTHO-eutheria_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/ORTHO-eutheria_longer.pkl"
+  proportion_to_mask: 0.15
+
+eutheria_only_unmasked:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/ORTHO-eutheria_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/ORTHO-eutheria_longer.pkl"
+  proportion_to_mask: 0.0
+
+splice_all_basic_homo:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_basic-homo_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_all_basic-homo_longer.pkl"
+  proportion_to_mask: 0.15
+
+splice_two_basic_homo:
+  <<: *new_base
+  short_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_basic-homo_shorter.pkl"
+  long_transcript_map_path: "/data1/morrisq/ian/rna_contrast/maps/REF-splice_two_basic-homo_longer.pkl"
+  proportion_to_mask: 0.15

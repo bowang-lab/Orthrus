@@ -1,0 +1,31 @@
+default: &default_optim
+  model_lr: 0.0005
+  model_weight_decay: 0.00001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  max_weight_decay: -1
+  clipnorm: 5
+
+anneal:
+  model_lr: 0.0005
+  model_weight_decay: 0.00001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  max_weight_decay: 0.0001
+  clipnorm: 5
+
+grid:
+  model_lr: 0.001
+  model_weight_decay: 0.00001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  max_weight_decay: 0.0001
+  clipnorm: 5
+
+high_wd:
+  model_lr: 0.0005
+  model_weight_decay: 0.00001
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  max_weight_decay: 0.001
+  clipnorm: 5

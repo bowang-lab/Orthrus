@@ -1,0 +1,18 @@
+default: &default
+  projection_body: 512
+  projection_head_size: 128
+  projection_norm_type: batchnorm
+
+default_256:
+  <<: *default
+  representation_dim: 256
+
+default_512:
+  <<: *default
+  representation_dim: 512
+
+grid:
+  projection_body: 512
+  projection_head_size: 128
+  projection_norm_type: batchnorm
+  representation_dim: 256

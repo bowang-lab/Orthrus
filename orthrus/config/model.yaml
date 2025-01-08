@@ -1,0 +1,66 @@
+resnet_base: &resnet_base
+  model_class: "resnet"
+  num_classes: 1
+  pooling_layer: "max_pool"
+  add_shift: True
+  increase_dialtion: False
+  resnet: "dilated_small"
+  norm_type: "batchnorm"
+  kernel_size: 2
+  global_pooling_layer: "avgpool"
+
+mamba_base: &mamba_base
+  model_class: "ssm"
+  ssm_model_dim: 256
+  ssm_n_layers: 3
+
+mamba_large: &mamba_large
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 4
+  n_tracks: 6
+  predict_splice_codon: False
+  predict_masked: False
+
+mamba_large_4t: &mamba_large_4t
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 4
+  n_tracks: 4
+
+mamba_deep: &mamba_deep
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 6
+  n_tracks: 6
+
+mamba_large_mlm:
+  <<: *mamba_large
+  predict_masked: True
+  predict_splice_codon: False
+
+mamba_deep_mlm:
+  <<: *mamba_deep
+  predict_masked: True
+  predict_splice_codon: False
+
+mamba_large_mlm_4t:
+  <<: *mamba_large_4t
+  predict_masked: True
+  predict_splice_codon: True
+
+mamba_grid_6t:
+  model_class: "ssm"
+  ssm_model_dim: 256
+  ssm_n_layers: 3
+  n_tracks: 6
+  predict_splice_codon: False
+  predict_masked: False
+
+mamba_grid_4t:
+  model_class: "ssm"
+  ssm_model_dim: 256
+  ssm_n_layers: 3
+  n_tracks: 4
+  predict_splice_codon: False
+  predict_masked: False
