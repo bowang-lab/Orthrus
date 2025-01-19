@@ -11,6 +11,8 @@ from data_utils import get_transcript_path, ortho_name_fn, ref_name_fn
 
 
 class Gene:
+    """Data class which associates all transcripts related to a gene."""
+
     def __init__(self, name):
         self.name = name
         self.splice_isoforms = set()
@@ -29,6 +31,17 @@ class Gene:
         self.orthologs.update([transcript_id])
 
     def get_transcript_map(self, add_ortho: bool) -> dict[str, set[str]]:
+        """Get dict that associates transcripts in gene with each other.
+
+        All splice isoforms are associated with other splice isoforms. Ortholog
+        relationships are optionally added.
+
+        Args:
+            add_orthro: Determines whether orthologous relationships are added.
+
+        Returns:
+            Dictionary of each transcript and list of associated transcripts.
+        """
         tt_dict = {}
 
         if len(self.splice_isoforms) == 0 and len(self.orthologs) > 0:
@@ -46,12 +59,21 @@ class Gene:
         return tt_dict
 
     def merge(self, other: Gene):
+        """Merge transcripts associated with other Gene into current Gene."""
         self.splice_isoforms.update(other.splice_isoforms)
         self.orthologs.update(other.orthologs)
 
 
 class TranscriptGeneDictGenerator:
+    """Constructs dictionary of genes from genomic annotation files."""
+
     def __init__(self, save_root_dir: str, source_type: str):
+        """Initialize TranscriptGeneDictGenerator.
+
+        Args:
+            save_root_dir: Path to directory where transcripts are stored.
+            source_type: Type of relationships contained in annotation.
+        """
         self.save_root_dir = save_root_dir
 
         if source_type not in ["REF", "ORTHO"]:
@@ -69,7 +91,9 @@ class TranscriptGeneDictGenerator:
             Whether transcript exists at the save directory.
         """
         t_path = "{}/{}/{}.npz".format(
-            self.save_root_dir, get_transcript_path(transcript_id), transcript_id
+            self.save_root_dir,
+            get_transcript_path(transcript_id),
+            transcript_id
         )
 
         return os.path.exists(t_path)
@@ -180,7 +204,8 @@ if __name__ == "__main__":
     )
 
     mapper = TranscriptGeneDictGenerator(
-        args.transcript_save_root_dir, args.source_type
+        args.transcript_save_root_dir,
+        args.source_type
     )
 
     tt_map = mapper.process_batch(args.batch_path)

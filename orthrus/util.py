@@ -84,14 +84,19 @@ def pretty_print_flags():
         print(f"{flag_name}: {flag_value}")
 
 
-def train_test_split_homologous(genes, df_homology, test_size=0.2, random_state=None):
-    """Split genes into train and test sets such that homologous genes are in the same set
+def train_test_split_homologous(
+    genes: list[str],
+    df_homology: pd.DataFrame,
+    test_size: float = 0.2,
+    random_state: int | None = None
+) -> dict[str, list[int]]:
+    """Split genes into sets such that homologous genes are in the same set.
 
     Args:
-        genes (list): List of gene names (strings)
-        df_homology (pd.DataFrame): DataFrame with columns 'gene_name' and 'gene_group'
-        test_size (float, optional): Defaults to 0.2.
-        random_state (int, optional): Defaults to None.
+        genes: List of gene names.
+        df_homology: DataFrame with columns 'gene_name' and 'gene_group'
+        test_size: Defaults to 0.2.
+        random_state: Defaults to None.
 
     Returns:
         dict: Dictionary with keys 'train_indices' and 'test_indices'

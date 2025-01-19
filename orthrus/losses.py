@@ -1,4 +1,7 @@
 from typing import Callable, Optional, Tuple
+
+import numpy as np
+
 from torchmetrics import Accuracy
 
 import torch
@@ -11,11 +14,12 @@ class DCLLoss(nn.Module):
     """Implementation of the Decoupled Contrastive Learning Loss from
     Decoupled Contrastive Learning [0].
 
-    This code implements Equation 6 in [0], including the sum over all images `i`
-    and views `k`. The loss is reduced to a mean loss over the mini-batch.
+    This code implements Equation 6 in [0], including the sum over all images
+    `i` and views `k`. The loss is reduced to a mean loss over the mini-batch.
     The implementation was inspired by [1].
 
-    - [0] Chun-Hsiao Y. et. al., 2021, Decoupled Contrastive Learning https://arxiv.org/abs/2110.06848
+    - [0] Chun-Hsiao Y. et. al., 2021, Decoupled Contrastive Learning
+          https://arxiv.org/abs/2110.06848
     - [1] https://github.com/raminnakhli/Decoupled-Contrastive-Learning
 
     Attributes:
@@ -23,10 +27,11 @@ class DCLLoss(nn.Module):
             Similarities are scaled by inverse temperature.
         weight_fn:
             Weighting function `w` from the paper. Scales the loss between the
-            positive views (views from the same image). No weighting is performed
-            if weight_fn is None. The function must take the two input tensors
-            passed to the forward call as input and return a weight tensor. The
-            returned weight tensor must have the same length as the input tensors.
+            positive views (views from the same image). No weighting is
+            performed if weight_fn is None. The function must take the two
+            input tensors passed to the forward call as input and return a
+            weight tensor. The returned weight tensor must have the same length
+            as the input tensors.
         gather_distributed:
             If True then negatives from all gpus are gathered before the
             loss calculation.
@@ -49,7 +54,6 @@ class DCLLoss(nn.Module):
         >>> # you can also add a custom weighting function
         >>> weight_fn = lambda out0, out1: torch.sum((out0 - out1) ** 2, dim=1)
         >>> loss_fn = DCLLoss(weight_fn=weight_fn)
-
     """
 
     def __init__(
@@ -65,16 +69,16 @@ class DCLLoss(nn.Module):
 
         if gather_distributed and not torch_dist.is_available():
             raise ValueError(
-                "gather_distributed is True but torch.distributed is not available. "
-                "Please set gather_distributed=False or install a torch version with "
-                "distributed support."
+                "gather_distributed is True but torch.distributed is not"
+                " available. Please set gather_distributed=False or install a "
+                "torch version with distributed support."
             )
 
     def forward(
         self,
-        out0: Tensor,
-        out1: Tensor,
-    ) -> Tensor:
+        out0: torch.Tensor,
+        out1: torch.Tensor
+    ) -> tuple[torch.Tensor, dict[str, float]]:
         """Forward pass of the DCL loss.
 
         Args:
@@ -86,7 +90,7 @@ class DCLLoss(nn.Module):
                 Shape: (batch_size, embedding_size)
 
         Returns:
-            Mean loss over the mini-batch.
+            Mean loss over the mini-batch and batch metrics.
         """
         # normalize the output to length 1
         out0 = nn.functional.normalize(out0, dim=1)
@@ -104,26 +108,31 @@ class DCLLoss(nn.Module):
         loss0, metrics0 = self._loss(out0, out1, out0_all, out1_all)
         loss1, metrics1 = self._loss(out1, out0, out1_all, out0_all)
         loss = 0.5 * (loss0 + loss1)
+
         metrics = {
             "mean_loss": loss.item(),
-            "positive_pair_similarity": (
-                metrics0["positive_pair_similarity"]
-                + metrics1["positive_pair_similarity"]
-            )
-            / 2,
-            "negative_pair_similarity": (
-                metrics0["negative_pair_similarity"]
-                + metrics1["negative_pair_similarity"]
-            )
-            / 2,
-            "contrastive_accuracy": (
-                metrics0["contrastive_accuracy"] + metrics1["contrastive_accuracy"]
-            )
-            / 2,
+            "positive_pair_similarity": np.mean([
+                metrics0["positive_pair_similarity"],
+                metrics1["positive_pair_similarity"]
+            ]),
+            "negative_pair_similarity": np.mean([
+                metrics0["negative_pair_similarity"],
+                metrics1["negative_pair_similarity"]
+            ]),
+            "contrastive_accuracy": np.mean([
+                metrics0["contrastive_accuracy"],
+                metrics1["contrastive_accuracy"]
+            ]),
         }
         return loss, metrics
 
-    def _loss(self, out0, out1, out0_all, out1_all):
+    def _loss(
+        self,
+        out0: Tensor,
+        out1: Tensor,
+        out0_all: Tensor,
+        out1_all: Tensor
+    ) -> tuple[Tensor, dict[str, float]]:
         """Calculates DCL loss for out0 with respect to its positives in out1
         and the negatives in out1, out0_all, and out1_all.
 
@@ -149,14 +158,17 @@ class DCLLoss(nn.Module):
                 Shape (batch_size * world_size, embedding_size)
 
         Returns:
-            Mean loss over the mini-batch.
+            Mean loss over the mini-batch and metrics.
         """
         # create diagonal mask that only selects similarities between
         # representations of the same images
         batch_size = out0.shape[0]
         global_bs = gather_batch_sizes(out0)
 
-        acc = Accuracy(task="multiclass", num_classes=sum(global_bs)).to(out0.device)
+        acc = Accuracy(
+            task="multiclass",
+            num_classes=sum(global_bs)
+        ).to(out0.device)
 
         offset = sum(global_bs[: rank()])
         labels_idx = (torch.arange(batch_size) + offset).to(out0.device)
@@ -172,14 +184,14 @@ class DCLLoss(nn.Module):
         if self.weight_fn:
             positive_loss = positive_loss * self.weight_fn(out0, out1)
 
-        accuracy = acc(sim_01, labels_idx).cpu()
+        accuracy = acc(sim_01, labels_idx).cpu().item()
         # Mean similarity of positive pairs
         positive_similarity = sim_01.diag().mean().item()
         # Approx. mean negative similarity
         negative_similarity = (sim_00.mean() + sim_01[~diag_mask].mean()) / 2.0
 
         metrics = {
-            "contrastive_accuracy": accuracy.item(),
+            "contrastive_accuracy": accuracy,
             "positive_pair_similarity": positive_similarity,
             "negative_pair_similarity": negative_similarity,
         }
@@ -224,7 +236,6 @@ class GatherIrregularLayer(torch.autograd.Function):
 
     @staticmethod
     def forward(self, input: torch.Tensor) -> tuple[torch.Tensor, ...]:
-        """TODO"""
         self.save_for_backward(input)
 
         world_size = torch_dist.get_world_size()
@@ -234,7 +245,9 @@ class GatherIrregularLayer(torch.autograd.Function):
 
         if size_diff:
             padding = torch.zeros(
-                (size_diff, input.size(1)), device=input.device, dtype=input.dtype
+                (size_diff, input.size(1)),
+                device=input.device,
+                dtype=input.dtype
             )
 
             input = torch.cat((input, padding), dim=0)
@@ -249,37 +262,17 @@ class GatherIrregularLayer(torch.autograd.Function):
 
     @staticmethod
     def backward(self, *grads: torch.Tensor) -> torch.Tensor:
-        """TODO"""
         (input,) = self.saved_tensors
         grad_out = torch.empty_like(input)
         grad_out[:] = grads[torch_dist.get_rank()]
         return grad_out
 
 
-class GatherLayer(torch.autograd.Function):
-    """Gather tensors from all processes, supporting backward propagation.
-
-    This code was taken and adapted from here:
-    https://github.com/Spijkervet/SimCLR
-    """
-
-    @staticmethod
-    def forward(ctx, input: torch.Tensor) -> Tuple[torch.Tensor, ...]:
-        ctx.save_for_backward(input)
-        output = [torch.empty_like(input) for _ in range(torch_dist.get_world_size())]
-        torch_dist.all_gather(output, input)
-        return tuple(output)
-
-    @staticmethod
-    def backward(ctx, *grads: torch.Tensor) -> torch.Tensor:
-        (input,) = ctx.saved_tensors
-        grad_out = torch.empty_like(input)
-        grad_out[:] = grads[torch_dist.get_rank()]
-        return grad_out
-
-
 def eye_rank_irregular(ex_in: torch.Tensor) -> torch.Tensor:
-    """TODO: Fill out description"""
+    """Compute the zero matrix with diagonal for process rank set to one.
+
+    Supports exmaples where each process may have different batch sizes.
+    """
     local_bs = ex_in.shape[0]
     global_bs = gather_batch_sizes(ex_in)
 
@@ -292,39 +285,10 @@ def eye_rank_irregular(ex_in: torch.Tensor) -> torch.Tensor:
     return diag_mask
 
 
-# https://github.com/lightly-ai/lightly/blob/master/lightly/utils/dist.py
-def eye_rank(n: int, device: Optional[torch.device] = None) -> torch.Tensor:
-    """Returns an (n, n * world_size) zero matrix with the diagonal for the rank
-    of this process set to 1.
-
-    Example output where n=3, the current process has rank 1, and there are
-    4 processes in total:
-
-        rank0   rank1   rank2   rank3
-        0 0 0 | 1 0 0 | 0 0 0 | 0 0 0
-        0 0 0 | 0 1 0 | 0 0 0 | 0 0 0
-        0 0 0 | 0 0 1 | 0 0 0 | 0 0 0
-
-    Equivalent to torch.eye for undistributed settings or if world size == 1.
-
-    Args:
-        n:
-            Size of the square matrix on a single process.
-        device:
-            Device on which the matrix should be created.
-
-    """
-    rows = torch.arange(n, device=device, dtype=torch.long)
-    cols = rows + rank() * n
-    diag_mask = torch.zeros((n, n * world_size()), dtype=torch.bool)
-    diag_mask[(rows, cols)] = True
-    return diag_mask
-
-
 def gather_batch_sizes(tensor: torch.Tensor) -> list[int]:
     """Gather batch sizes for a tensor across all processes.
 
-    Used when batches have differential size across GPUs.
+    Used when batches have different sizes across GPUs.
 
     Args:
         tensor: Local input tensor.

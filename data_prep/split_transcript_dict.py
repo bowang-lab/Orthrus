@@ -12,10 +12,26 @@ from generate_transcript_dict import Gene
 
 
 class DatasetSaver:
-    """A PyTorch Dataset that operates over Transcript objects."""
+    """Data class which constructs map of transcript to related transcripts.
 
-    def __init__(self, npz_save_dir: str, split_length: int, max_length: int) -> None:
-        """Initialize a transcript dataset."""
+    Transcripts associated in this map are used as the positive pair
+    relationships during contrastive pre-training.
+
+    This class also can also generate maps which filter out transcripts above
+    a certain length. This is useful for optimizing GPU memory usage in multi-
+    GPU training, where longer transcripts can be sent to a single node to
+    reduce length padding.
+    """
+
+    def __init__(self, npz_save_dir: str, split_length: int, max_length: int):
+        """Initialize a transcript dataset.
+
+        Args:
+            npz_save_dir: Directory where transcripts are saved.
+            split_length: Transcripts above and below this length can be
+                optionally partitioned into two different maps.
+            max_length: Transcripts above this length are filtered.
+        """
         self.npz_save_dir = npz_save_dir
         self.split_length = split_length
         self.max_length = max_length
@@ -98,11 +114,22 @@ class DatasetSaver:
         return gt_map
 
     def get_transcript_length(self, transcript_id: str) -> int:
+        """Get length of transcript.
+
+        Args:
+            transcript_id: Transcript id.
+
+        Returns:
+            Length of transcript in nucleotides. Returns -1 if not found.
+        """
         if transcript_id in self.transcript_length_map:
             return self.transcript_length_map[transcript_id]
 
         t_path_dirs = get_transcript_path(transcript_id)
-        t_path = "{}/{}/{}.npz".format(self.npz_save_dir, t_path_dirs, transcript_id)
+        t_path = "{}/{}/{}.npz".format(
+            self.npz_save_dir,
+            t_path_dirs, transcript_id
+        )
 
         try:
             t_length = int(np.load(t_path)["length"])
@@ -113,6 +140,19 @@ class DatasetSaver:
         return t_length
 
     def filter_by_length(self, p_ids: list[str], is_short: bool) -> list[str]:
+        """Filters all transcript in list by length threshold.
+
+        Method is I/O bound due to reading transcript files, and is
+        parallelized using threads for efficiency.
+
+        Args:
+            p_ids: List of transcripts to filter.
+            is_short: If true, selects transcripts below self.split_length.
+                Otherwise, selects transcripts less than self.max_length.
+
+        Returns:
+            Filtered list of transcripts.
+        """
         e = concurrent.futures.ThreadPoolExecutor(max_workers=len(p_ids))
 
         futures = {}
@@ -138,7 +178,8 @@ class DatasetSaver:
         return new_associates
 
     def split_transcript_map_by_length(
-        self, transcript_map: dict[str : list[str]]
+        self,
+        transcript_map: dict[str: list[str]]
     ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
         """Filter transcript map by length of transcript.
 
@@ -172,8 +213,19 @@ class DatasetSaver:
         return shorter_map, longer_map
 
     def split_transcript_map_by_length_chunked(
-        self, chunk: int, total_chunks: int
+        self,
+        chunk: int,
+        total_chunks: int
     ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+        """Perform length filtering of transcripts on dataset chunk.
+
+        Args:
+            chunk: Current chunk to process.
+            total_chunks: Number of total chunks dataset is divided into.
+
+        Returns:
+            Filtered transcript maps for current chunk.
+        """
         assert self.transcript_map is not None
 
         keys = list(self.transcript_map.keys())
@@ -198,14 +250,17 @@ if __name__ == "__main__":
     parser.add_argument("--homo_path", type=str)
     args = parser.parse_args()
 
-    MAP_ROOT = "/data1/morrisq/ian/rna_contrast/maps"
-    TRANSCRIPT_ROOT = "/data1/morrisq/ian/rna_contrast/transcripts"
+    MAP_ROOT = ""
+    TRANSCRIPT_ROOT = ""
 
     def prepend_path(map_list):
         return [MAP_ROOT + "/" + map_name for map_name in map_list]
 
     dataset_combos = {
-        "ORTHO-eutheria": ["ORTHO-human_eutheria.pkl", "ORTHO-mouse_eutheria.pkl"],
+        "ORTHO-eutheria": [
+            "ORTHO-human_eutheria.pkl",
+            "ORTHO-mouse_eutheria.pkl"
+        ],
         "REF-splice_all_basic": ["REF-splice_all_basic.pkl"],
         "REF-splice_two_basic": ["REF-splice_two_basic.pkl"],
         "COMB-eutheria-splice_all_basic": [

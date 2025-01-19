@@ -49,7 +49,11 @@ class TranscriptTranscriptDataset(Dataset):
             Sequence data associated with transcript.
         """
         t_path_dirs = get_transcript_path(transcript_id)
-        t_path = "{}/{}/{}.npz".format(self.npz_save_dir, t_path_dirs, transcript_id)
+        t_path = "{}/{}/{}.npz".format(
+            self.npz_save_dir,
+            t_path_dirs,
+            transcript_id
+        )
 
         t_data = np.load(t_path)["six_track_data"]
 
@@ -85,56 +89,6 @@ class TranscriptTranscriptDataset(Dataset):
             pair_transcript_id = associated_transcripts[pair_transcript_idx]
         else:
             pair_transcript_id = base_transcript_id
-
-        encoded_base_transcript = self.load_transcript(base_transcript_id)
-        encoded_pair_transcript = self.load_transcript(pair_transcript_id)
-
-        len_t1 = encoded_base_transcript.shape[1]
-        len_t2 = encoded_pair_transcript.shape[1]
-
-        return encoded_base_transcript, encoded_pair_transcript, len_t1, len_t2
-
-
-class WeightedTranscriptTranscriptDataset(TranscriptTranscriptDataset):
-
-    def __init__(
-        self,
-        transcript_mapping: dict[str, list[str]],
-        npz_save_dir: str,
-        mask_percentage: float = 0,
-        weight: float = 0.5,
-    ) -> None:
-        super().__init__(transcript_mapping, npz_save_dir, mask_percentage)
-        self.weight = weight
-
-    def __getitem__(self, idx: int) -> tuple[Transcript, Transcript, int, int]:
-        """Get Transcript object and a randomly sampled associated Transcript.
-
-        :param idx: The index of the item.
-        :return: A tuple containing the one-hot encoded RNA sequences.
-        """
-        base_transcript_id = self.index_to_transcript[idx]
-        associated_transcripts = self.transcript_mapping[base_transcript_id]
-        associated_transcripts = list(associated_transcripts)
-
-        def is_ortho(t_id):
-            return len(t_id.split("_")) == 3
-
-        splice = [t for t in associated_transcripts if not is_ortho(t)]
-        ortho = [t for t in associated_transcripts if is_ortho(t)]
-
-        if len(splice) == 0 and len(ortho) == 0:
-            pair_transcript_id = base_transcript_id
-        elif len(splice) == 0 or len(ortho) == 0:
-            pair_transcript_idx = np.random.choice(len(associated_transcripts))
-            pair_transcript_id = associated_transcripts[pair_transcript_idx]
-        else:
-            if np.random.random() > self.weight:
-                pair_transcript_idx = np.random.choice(len(splice))
-                pair_transcript_id = splice[pair_transcript_idx]
-            else:
-                pair_transcript_idx = np.random.choice(len(ortho))
-                pair_transcript_id = ortho[pair_transcript_idx]
 
         encoded_base_transcript = self.load_transcript(base_transcript_id)
         encoded_pair_transcript = self.load_transcript(pair_transcript_id)
@@ -252,78 +206,6 @@ def init_data_loader(
     )
 
     val_dataset = TranscriptTranscriptDataset(
-        short_val_tt_map,
-        npz_save_dir=data_config["transcript_save_dir"],
-    )
-
-    train_data_short_loader = DataLoader(
-        train_dataset_shorter,
-        batch_size=train_config["gpu_batch_sizes"][1],
-        shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=8,
-    )
-
-    train_data_long_loader = DataLoader(
-        train_dataset_longer,
-        batch_size=train_config["gpu_batch_sizes"][0],
-        shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=8,
-    )
-
-    val_data_loader = DataLoader(
-        val_dataset,
-        batch_size=train_config["gpu_batch_sizes"][2],
-        shuffle=False,
-        collate_fn=collate_fn,
-        num_workers=8,
-    )
-
-    return train_data_short_loader, train_data_long_loader, val_data_loader
-
-
-def init_weighted_data_loader(
-    data_config: dict,
-    train_config: dict,
-) -> tuple[DataLoader, DataLoader, DataLoader]:
-    """Initialize train and validation dataloaders split by transcript length.
-
-    Returns two training dataloaders that contain subsets of transcripts based
-    on sequence length. A sequence length of 3900 provides a good 3:1 split
-    in the current transcript set.
-
-    Args:
-        data_config: Dictionary of data configuration values.
-        train_config: Dictionary of training config values.
-        save_datasets: Whether processed transcripts are cached to disk.
-        save_maps: Whether to save the generated transcript maps.
-        mini: Specifies whether a subset of transcripts are used.
-
-    Returns:
-        Train and validation dataloaders.
-    """
-    with open(data_config["short_transcript_map_path"], "rb") as f:
-        short_tt_map = pickle.load(f)
-
-    with open(data_config["long_transcript_map_path"], "rb") as f:
-        long_tt_map = pickle.load(f)
-
-    short_train_tt_map, short_val_tt_map = split_dict(short_tt_map, 0.95)
-
-    train_dataset_shorter = WeightedTranscriptTranscriptDataset(
-        short_train_tt_map,
-        npz_save_dir=data_config["transcript_save_dir"],
-        mask_percentage=data_config["proportion_to_mask"],
-    )
-
-    train_dataset_longer = WeightedTranscriptTranscriptDataset(
-        long_tt_map,
-        npz_save_dir=data_config["transcript_save_dir"],
-        mask_percentage=data_config["proportion_to_mask"],
-    )
-
-    val_dataset = WeightedTranscriptTranscriptDataset(
         short_val_tt_map,
         npz_save_dir=data_config["transcript_save_dir"],
     )

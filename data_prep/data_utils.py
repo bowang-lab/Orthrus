@@ -65,7 +65,7 @@ def get_transcript_path(transcript_id: str) -> str:
         species_id = root_id
         numeric_id = transcript_id.split(".")[0].split("_")[1]
 
-        chunks = [numeric_id[i : i + 3] for i in range(0, len(numeric_id), 3)]
+        chunks = [numeric_id[i: i + 3] for i in range(0, len(numeric_id), 3)]
         path = root_id + "/" + "/".join(chunks)
     else:
         # Ensembl style ID

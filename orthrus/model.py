@@ -93,7 +93,10 @@ class ContrastiveLearningModel(pl.LightningModule):
 
     def on_train_epoch_start(self):
         # log learning rate
-        self.log("learning_rate", self.trainer.optimizers[0].param_groups[0]["lr"])
+        self.log(
+            "learning_rate",
+            self.trainer.optimizers[0].param_groups[0]["lr"]
+        )
 
         if self.opt_config["max_weight_decay"] == -1:
             return super().on_train_epoch_start()
@@ -111,12 +114,14 @@ class ContrastiveLearningModel(pl.LightningModule):
                 initial_weight_decay = self.opt_config["projection_head_weight_decay"]
 
             final_weight_decay = self.opt_config["max_weight_decay"]
+
             # linearly interpolate weight decay
-            increment = (
-                (final_weight_decay - initial_weight_decay)
-                * (current_step - self.opt_config["warmup_steps"])
-                / (self.train_config["number_steps"] - self.opt_config["warmup_steps"])
-            )
+            wd_delta = final_weight_decay - initial_weight_decay
+            curr_steps = current_step - self.opt_config["warmup_steps"]
+            total_steps = self.train_config["number_steps"] - self.opt_config["warmup_steps"]
+
+            increment = wd_delta * curr_steps / total_steps
+
             param_group["weight_decay"] = initial_weight_decay + increment
 
             self.log(

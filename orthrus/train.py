@@ -42,7 +42,8 @@ def save_config(
         # sort over epoch and step
         if checkpoints:
             sorted_checkpoint_list = sorted(
-                checkpoints, key=lambda x: tuple(map(int, re.findall(r"(\d+)", x)))
+                checkpoints,
+                key=lambda x: tuple(map(int, re.findall(r"(\d+)", x)))
             )
             last_checkpoint = sorted_checkpoint_list[-1]
 
@@ -119,21 +120,33 @@ def main(argv):
         wandb_kwargs["resume"] = True
 
     wandb_logger = WandbLogger(
-        name=run_name, save_dir=run_path, project="rna_rep_grid", **wandb_kwargs
+        name=run_name,
+        save_dir=run_path,
+        project="rna_rep_grid",
+        **wandb_kwargs
     )
 
+    # Allows PyTorch to resize memory allocated to batches. This allows
+    # efficient handling of variable length batches.
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
     short_loader, long_loader, val_data_loader = init_data_loader(
         data_config=config.data,
         train_config=config.train,
     )
+
     train_data_loader = CombinedLoader(
-        {"short": short_loader, "long": long_loader}, mode="max_size_cycle"
+        {"short": short_loader, "long": long_loader},
+        mode="max_size_cycle"
     )
 
     # Model
     model = ContrastiveLearningModel(
-        config.model, config.projector, config.optimizer, config.train, config.data
+        config.model,
+        config.projector,
+        config.optimizer,
+        config.train,
+        config.data
     )
 
     wandb_logger.watch(model, log_freq=500)
