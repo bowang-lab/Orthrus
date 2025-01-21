@@ -92,7 +92,9 @@ class MixerModel(nn.Module):
             )
 
         residual = (hidden_states + residual) if residual is not None else hidden_states
-        hidden_states = self.norm_f(residual.to(dtype=self.norm_f.weight.dtype))
+        hidden_states = self.norm_f(
+            residual.to(dtype=self.norm_f.weight.dtype)
+        )
 
         hidden_states = hidden_states
 
@@ -123,18 +125,23 @@ class MixerModel(nn.Module):
         elif aggregation == "exponential":
             out_tensor = exponential_length_weighting(out, lengths)
         elif aggregation == "exponential_norm":
-            out_tensor = exponential_length_weighting(out, lengths, normalized=True)
+            out_tensor = exponential_length_weighting(
+                out,
+                lengths,
+                normalized=True
+            )
         else:
             raise ValueError(f"Invalid aggregation method: {aggregation}")
-        
+
         return out_tensor
 
+
 def exponential_length_weighting(
-    x: torch.Tensor, 
-    lengths: torch.Tensor, 
+    x: torch.Tensor,
+    lengths: torch.Tensor,
     normalized: bool = False
 ) -> torch.Tensor:
-    """Apply exponential weighting to tensor across second dimension. 
+    """Apply exponential weighting to tensor across second dimension.
     Last element has the highest weighting.
 
     Args:
@@ -152,11 +159,12 @@ def exponential_length_weighting(
     weights = torch.exp(weights.float())
     weighted_tensor = masked_tensor * weights.unsqueeze(-1)
     sum_tensor = weighted_tensor.sum(dim=1)
-    
+
     if normalized:
         sum_tensor /= weights.sum(dim=1).unsqueeze(-1)
-    
+
     return sum_tensor
+
 
 def last_unpadded(x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
     """Get last unpadded element of tensor across second dimension.
@@ -173,6 +181,7 @@ def last_unpadded(x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
     last_tensor = masked_tensor[torch.arange(x.size(0), device=x.device), lengths.long() - 1]
 
     return last_tensor
+
 
 def mean_unpadded(x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
     """Take mean of tensor across second dimension without padding.

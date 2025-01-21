@@ -68,7 +68,7 @@ conda activate orthrus
 3. Install additional dependencies:
 ```bash
 # Install necessary dependencies for the Mamba model (not the environment manager)
-pip install causal_conv1d==1.1.1
+pip install causal_conv1d==1.2.0.post2
 pip install mamba-ssm==1.2.0.post1 --no-cache-dir
 ```
 

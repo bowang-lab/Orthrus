@@ -15,22 +15,22 @@ class LayerNormalization(nn.Module):
 
 class SalukiConv1D(nn.Module):
     def __init__(
-        self, 
-        filters_in: int, 
-        filters_out: int, 
-        kernel_size: int, 
+        self,
+        filters_in: int,
+        filters_out: int,
+        kernel_size: int,
         initializer: str,
-        dropout: float, 
-        ln_epsilon: float, 
+        dropout: float,
+        ln_epsilon: float,
     ):
         super(SalukiConv1D, self).__init__()
 
         self.ln1 = LayerNormalization(epsilon=ln_epsilon)
         self.act1 = nn.ReLU()
         self.conv1 = nn.Conv1d(
-            in_channels=filters_in, 
-            out_channels=filters_out, 
-            kernel_size=kernel_size, 
+            in_channels=filters_in,
+            out_channels=filters_out,
+            kernel_size=kernel_size,
             padding="valid"
         )
         self.d1 = nn.Dropout(dropout)
@@ -44,16 +44,16 @@ class SalukiConv1D(nn.Module):
         x = self.d1(x)
         x = self.max1(x)
         return x
-    
+
 
 def make_saluki_layer(
-    num_layers: int, 
-    filters_in: int, 
-    filters_out: int, 
-    kernel_size: int, 
-    initializer: str="he_normal", 
-    dropout: float=0.3, 
-    ln_epsilon: float=0.007,
+    num_layers: int,
+    filters_in: int,
+    filters_out: int,
+    kernel_size: int,
+    initializer: str = "he_normal",
+    dropout: float = 0.3,
+    ln_epsilon: float = 0.007,
 ):
     layers = []
     for _ in range(num_layers):
@@ -72,20 +72,20 @@ def make_saluki_layer(
 
 class SalukiModel(nn.Module):
     def __init__(
-        self, 
-        activation="relu", 
-        seq_length=12288, 
-        augment_shift=3, 
+        self,
+        activation="relu",
+        seq_length=12288,
+        augment_shift=3,
         heads=2,
-        filters=64, 
-        kernel_size=5, 
-        dropout=0.3, 
-        ln_epsilon=0.007, 
+        filters=64,
+        kernel_size=5,
+        dropout=0.3,
+        ln_epsilon=0.007,
         num_layers=6,
-        bn_momentum=0.90, 
-        residual=False, 
-        initializer="he_normal", 
-        seq_depth=6, 
+        bn_momentum=0.90,
+        residual=False,
+        initializer="he_normal",
+        seq_depth=6,
         go_backwards=True,
         final_layer=False,
         add_shift=True,
@@ -94,20 +94,20 @@ class SalukiModel(nn.Module):
         self.go_backwards = go_backwards
         if add_shift:
             self.shift = StochasticShift(
-                shift_max=augment_shift, 
+                shift_max=augment_shift,
                 symmetric=False
             )
         else:
             self.shift = nn.Identity()
 
         self.conv0 = nn.Conv1d(
-            in_channels=seq_depth, 
-            out_channels=filters, 
-            kernel_size=kernel_size, 
-            padding='valid', 
+            in_channels=seq_depth,
+            out_channels=filters,
+            kernel_size=kernel_size,
+            padding='valid',
             bias=False
         )
-        
+
         self.mid = make_saluki_layer(
             num_layers=num_layers,
             filters_in=filters,
@@ -117,13 +117,13 @@ class SalukiModel(nn.Module):
             dropout=dropout,
             ln_epsilon=ln_epsilon,
         )
-        
+
         self.ln = LayerNormalization(epsilon=ln_epsilon)
 
         self.rnn_layer = nn.GRU(
-            input_size=filters, 
-            hidden_size=filters, 
-            batch_first=True, 
+            input_size=filters,
+            hidden_size=filters,
+            batch_first=True,
             bidirectional=False
         )
         self.bn2 = nn.BatchNorm1d(filters, momentum=bn_momentum)
@@ -145,7 +145,7 @@ class SalukiModel(nn.Module):
 
         # Input to GRU is B x L x C
         x = torch.transpose(x, 1, 2)
-        
+
         # reflect the sequence along the time axis
         if self.go_backwards:
             x = torch.flip(x, [1])

@@ -1,0 +1,56 @@
+default: &default
+  rand_seed: 0
+  number_steps: 20000
+  mixed_precision: True
+  wandb_run_dir: "/data1/morrisq/ian/rna_contrast/runs"
+  split_by_length: True
+
+a40_ssm_256_3:
+  <<: *default
+  gpu_batch_sizes: [40, 240, 40]
+
+a100_ssm_256_3:
+  <<: *default
+  gpu_batch_sizes: [150, 500, 150]
+
+a100_ssm_512_4:
+  <<: *default
+  gpu_batch_sizes: [65, 210, 65]
+  mask_prop: 0.0
+
+a100_ssm_512_4_half:
+  <<: *default
+  gpu_batch_sizes: [30, 100, 30]
+
+a100_ssm_512_4_quarter:
+  <<: *default
+  gpu_batch_sizes: [15, 50, 15]
+
+a100_ssm_512_6:
+  <<: *default
+  gpu_batch_sizes: [50, 150, 50]
+  mask_prop: 0.0
+
+a100_ssm_512_4_long:
+  <<: *default
+  number_steps: 30000
+  gpu_batch_sizes: [65, 210, 65]
+
+a100_ssm_512_4_mlm:
+  <<: *default
+  gpu_batch_sizes: [55, 170, 55]
+  mask_prop: 0.15
+
+a100_ssm_512_6_mlm:
+  <<: *default
+  gpu_batch_sizes: [45, 130, 45]
+  mask_prop: 0.15
+
+a40_grid:
+  rand_seed: 0
+  number_steps: 20000
+  mixed_precision: True
+  wandb_run_dir: "/data1/morrisq/ian/rna_contrast/grid_runs"
+  split_by_length: True
+  gpu_batch_sizes: [40, 240, 40]
+  mask_prop: 0.0
