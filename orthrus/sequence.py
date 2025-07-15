@@ -3,21 +3,11 @@ This module provides the `Sequence` class. This class is the abstract
 base class for biological sequence collections (e.g. genomes).
 
 """
-
 from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
 import pyximport
-
-pyximport.install(
-    setup_args={
-        "script_args": ["--compiler=mingw32"],
-        "include_dirs": np.get_include(),
-    },
-    reload_support=True,
-)
-from ._sequence import _fast_sequence_to_encoding
 
 
 def sequence_to_encoding(sequence, base_to_index, bases_arr):
@@ -47,7 +37,20 @@ def sequence_to_encoding(sequence, base_to_index, bases_arr):
         the size of the sequence alphabet.
 
     """
-    return _fast_sequence_to_encoding(sequence, base_to_index, len(bases_arr))
+    # return _fast_sequence_to_encoding(sequence, base_to_index, len(bases_arr))
+
+    L = len(sequence)
+    N = len(bases_arr)
+    
+    # Initialize a zero matrix of shape (L, N)
+    encoding = np.zeros((L, N), dtype=np.float32)
+
+    for i, base in enumerate(sequence):
+        if base in base_to_index:
+            encoding[i, base_to_index[base]] = 1.0
+        # Bases not in base_to_index remain as rows of zeros
+    
+    return encoding
 
 
 def _get_base_index(encoding_row):

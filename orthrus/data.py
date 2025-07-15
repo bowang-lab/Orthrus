@@ -5,9 +5,154 @@ __all__ = ["Interval", "Transcript", "RefseqDataset"]
 
 import pandas as pd
 import numpy as np
-from .genome import Genome
+from orthrus.genome import Genome
 from typing import List
+import random 
 
+def mask_encoding(data, mask_percentage: float, channels_last: bool = False):
+    """
+    Mask a percentage of the encoding data by setting it to zero.
+    This is useful if we don't have enough splice isoforms/orthologs/pre-mRNA
+    to sample from.
+    :param data: The encoding data to be masked.
+    :param mask_percentage: The percentage of the data to be masked.
+    :return: The masked encoding data.
+    """
+    # if data is a view, we need to copy it to avoid modifying the original data
+    data = np.array(data, copy=True)
+
+    if channels_last:
+        data = np.swapaxes(data, 0, 1)
+
+    num_elements_to_mask = int(data.shape[1] * mask_percentage)
+    mask_indices = np.random.choice(
+        data.shape[1],
+        num_elements_to_mask,
+        replace=False
+    )
+    data[:, mask_indices] = 0
+
+    if channels_last:
+        data = np.swapaxes(data, 0, 1)
+
+    return data
+
+class SpeciesGene:
+    def __init__(self, pre_mrna, splice_isoforms, orthologs):
+        self.pre_mrna = pre_mrna
+        self.splice_isoforms = splice_isoforms
+        self.orthologs = orthologs
+
+    def sample_splice_isoforms(self, n: int = 4, masking_prop: float = 0.0):
+        """
+        Sample n splice isoforms from the gene.
+        """
+
+        sampled = []
+
+        sampled.extend(self.splice_isoforms)
+
+        if n > len(self.splice_isoforms):
+
+            additional_samples = n - len(self.splice_isoforms)
+
+            sampled.extend(random.choices(self.splice_isoforms, k=additional_samples))
+
+        elif len(self.splice_isoforms) > 0:
+            sampled.extend(random.sample(self.splice_isoforms, n))
+
+        if masking_prop > 0:
+            # Mask the samples
+            for i in range(len(sampled)):
+                sampled[i] = mask_encoding(
+                    sampled[i], masking_prop
+                )
+        
+        return sampled
+
+    def sample_orthologs(self, n: int = 4, masking_prop: float = 0.0):
+        """
+        Sample n orthologs from the gene.
+        """
+        
+        sampled = []
+
+        sampled.extend(self.orthologs)
+
+        if n > len(self.orthologs):
+
+            additional_samples = n - len(self.orthologs)
+
+            sampled.extend(random.choices(self.orthologs, k=additional_samples))
+
+        elif len(self.orthologs) > 0:
+            sampled.extend(random.sample(self.orthologs, n))
+
+        if masking_prop > 0:
+            # Mask the samples
+            for i in range(len(sampled)):
+                sampled[i] = mask_encoding(
+                    sampled[i], masking_prop
+                )
+        
+        return sampled
+
+    def sample_locals(self, n: int = 8, masking_prop: float = 0.0, iso_weight: float = 0.5):
+        """
+        Sample n local sequences from the splice isoforms and orthologs.
+        If one of the lists is empty, sample all n from the other.
+        Otherwise, sample int(n * iso_weight) from splice isoforms and n - int(n * iso_weight) from orthologs.
+        """
+        # If both lists are empty, return an empty list.
+        if not self.splice_isoforms and not self.orthologs:
+            return []
+        # If one of the lists is empty, sample all from the other.
+        if not self.splice_isoforms:
+            return self.sample_orthologs(n)
+        if not self.orthologs:
+            return self.sample_splice_isoforms(n)
+
+        # Determine desired counts using iso_weight.
+        n_iso = int(n * iso_weight)
+        n_ortho = n - n_iso
+
+        splice_samples = self.sample_splice_isoforms(n_iso, masking_prop)
+        ortholog_samples = self.sample_orthologs(n_ortho, masking_prop)
+        return splice_samples + ortholog_samples
+
+class Gene:
+    def __init__(self):
+        self.species_genes = {}  # keys: species name, values: SpeciesGene objects
+    
+    def sample_species(self, n: int = 2):
+        """
+        Sample n species from the gene.
+        """
+    
+        if len(self.species_genes) == 0:
+            return []
+        if n > len(self.species_genes):
+            additional_samples = n - len(self.species_genes)
+            replacement_samples = random.choices(list(self.species_genes.keys()), k=additional_samples)
+            return list(self.species_genes.keys()) + replacement_samples
+        else:
+            return random.sample(list(self.species_genes.keys()), n)
+
+    def sample_globals(self, species: list, masking_prop: float = 0.0):
+        """
+        Get the pre-mRNA sequences for each of the given species and add masking.
+        """
+
+        sampled = []
+
+        for species_name in species:
+            if species_name in self.species_genes:
+                pre_mrna = self.species_genes[species_name].pre_mrna
+                if masking_prop > 0:
+                    pre_mrna = mask_encoding(pre_mrna, masking_prop)
+                sampled.append(pre_mrna)
+
+        return sampled
 
 class Interval(object):
     """
@@ -22,16 +167,6 @@ class Interval(object):
     def __init__(
         self, chromosome: str, start: int, end: int, strand: str, genome: Genome
     ):
-        """
-        Initialize an Interval object.
-
-        Args:
-            chromosome (str): Chromosome name (e.g., 'chr1', 'chr2', etc.).
-            start (int): 0-based start coordinate (inclusive).
-            end (int): 0-based end coordinate (exclusive).
-            strand (str): Strand of the interval ('+' or '-').
-            genome (Genome): Genome object providing sequence/encoding methods.
-        """
         assert strand in ["+", "-"], strand
         self.strand = strand
         self.chrom = chromosome
@@ -45,48 +180,19 @@ class Interval(object):
         self.alphabet_map = {"A": 0, "C": 1, "T": 2, "G": 3, "N": 4}
 
     def __len__(self):
-        """
-        Get the length of the interval.
-
-        Returns:
-            int: The length of the interval (end - start).
-        """
         return self.end - self.start
-
-    @property
-    def chromosome(self):
-        """
-        Chromosome property for easier usage in string formatting.
-
-        Returns:
-            str: The chromosome name of this interval.
-        """
-        return self.chrom
 
     def __repr__(self):
         """
-        Return a string representation of the Interval.
-
-        Returns:
-            str: String representation of the interval in the form:
-                 'Interval chrom:start-end:strand'.
+        Return string representation of a transcript
         """
         return "Interval {}:{}-{}:{}".format(
             self.chromosome, self.start, self.end, self.strand
         )
 
     def overlaps(self, interval):
-        """
-        Compute the overlap in base pairs between this interval and another interval.
 
-        Args:
-            interval (Interval): Another interval to check overlap with.
-
-        Returns:
-            int: Number of overlapping bases. Returns 0 if there is no overlap,
-                 or if they are on different chromosomes/strands.
-        """
-        assert isinstance(interval, Interval)
+        assert type(interval) == Interval
         if interval.chrom != self.chrom:
             return 0
         if interval.strand != self.strand:
@@ -102,16 +208,7 @@ class Interval(object):
             return overlap
 
     def within(self, interval):
-        """
-        Check whether this interval is fully contained within another interval.
-
-        Args:
-            interval (Interval): The interval in which to check containment.
-
-        Returns:
-            bool: True if this interval is within the given interval, False otherwise.
-        """
-        assert isinstance(interval, Interval)
+        assert type(interval) == Interval
         if interval.chrom != self.chrom:
             return False
         if interval.strand != self.strand:
@@ -123,17 +220,6 @@ class Interval(object):
         return after_start and before_end
 
     def one_hot_encode(self, zero_mean: bool = True):
-        """
-        Get one-hot encoding of the sequence within this interval.
-
-        Args:
-            zero_mean (bool, optional): Whether to apply zero-mean normalization
-                by subtracting 0.25 from each channel. Defaults to True.
-
-        Returns:
-            np.ndarray: A NumPy array of shape (length_of_interval, 4) containing
-                one-hot or zero-mean-encoded representation of the sequence.
-        """
         seq = self.genome.get_encoding_from_coords(
             self.chrom, self.start, self.end, self.strand
         )
@@ -142,24 +228,11 @@ class Interval(object):
         return seq
 
     def sequence(self):
-        """
-        Get the nucleotide sequence for this interval as a string.
-
-        Returns:
-            str: The nucleotide sequence corresponding to this interval.
-        """
         return self.genome.get_sequence_from_coords(
             self.chrom, self.start, self.end, self.strand
         )
 
     def encode(self):
-        """
-        Encode the nucleotide sequence of this interval into numeric labels.
-
-        Returns:
-            np.ndarray: A NumPy array of shape (length_of_interval,) containing
-                integer labels (0 for A, 1 for C, 2 for T, 3 for G, 4 for N).
-        """
         seq = self.genome.get_sequence_from_coords(
             self.chrom, self.start, self.end, self.strand
         ).upper()
@@ -168,8 +241,8 @@ class Interval(object):
 
 class Transcript(object):
     """
-    An object representing an RNA transcript, allowing queries for its sequence,
-    conversions to one-hot encoding, and various transcript-level utilities.
+    An object reprenting an RNA transcript allowing to query RNA sequence and
+    convert to one hot encoding.
     """
 
     def __init__(
@@ -190,25 +263,15 @@ class Transcript(object):
         expand_exon_distance: int = 0,
     ):
         """
-        Initialize a Transcript object.
-
-        Args:
-            transcript_id (str): Identifier for the transcript (e.g., 'NM_001...').
-            gene (str): Gene name associated with the transcript.
-            exon_starts (List[int]): List of start coordinates for each exon.
-            exon_ends (List[int]): List of end coordinates for each exon.
-            genome (Genome): Genome object providing sequence/encoding methods.
-            exon_count (int): Number of exons in this transcript.
-            strand (str): Strand of the transcript ('+' or '-').
-            chromosome (str): Chromosome on which the transcript resides.
-            tx_start (int): Start coordinate of the transcript (inclusive).
-            tx_end (int): End coordinate of the transcript (exclusive).
-            cds_start (int): Start coordinate of the coding sequence (inclusive).
-            cds_end (int): End coordinate of the coding sequence (exclusive).
-            expand_transcript_distance (int, optional): Distance to extend
-                upstream/downstream of the transcript. Defaults to 0.
-            expand_exon_distance (int, optional): Distance to extend
-                around each exon. Defaults to 0.
+        transcript_id
+        gene
+        exon_starts
+        exon_ends
+        genome
+        exon_count
+        pad transcript
+        expand_transcript_distance
+        expand_exon_distance
         """
         self.transcript_id = str(transcript_id)
         self.gene = str(gene)
@@ -263,32 +326,22 @@ class Transcript(object):
 
     def __len__(self):
         """
-        Return the total length of all intervals that make up this transcript,
-        including any exon/transcript expansions.
-
-        Returns:
-            int: The sum of lengths of each interval in transcript_intervals.
+        Length returns the total length of the generated sequence including
+        exon expand distance and transcript expand distance.
         """
         return np.sum([len(x) for x in self.transcript_intervals])
 
     def __repr__(self) -> str:
-        """
-        Return a string representation of this transcript.
-
-        Returns:
-            str: String of the form 'Transcript id chrom:tx_start-tx_end:strand'.
-        """
+        """Return string representation of a transcript."""
         return "Transcript {} {}:{}-{}:{}".format(
-            self.transcript_id, self.chromosome, self.tx_start, self.tx_end, self.strand
+            self.transcript_id,
+            self.chromosome,
+            self.tx_start,
+            self.tx_end,
+            self.strand
         )
 
     def __hash__(self):
-        """
-        Create a hash of this transcript object for usage in sets/dicts.
-
-        Returns:
-            int: A hash representing unique aspects of the transcript.
-        """
         identifier = (
             f"{self.gene} length {self.__len__()} n_exons {self.exon_count}"
             f"{self.transcript_id} {self.chromosome}:{self.tx_start}-{self.tx_end}:{self.strand}"
@@ -296,16 +349,6 @@ class Transcript(object):
         return hash(identifier)
 
     def __eq__(self, other):
-        """
-        Check equality with another Transcript object.
-
-        Args:
-            other (Transcript): Another transcript to compare with.
-
-        Returns:
-            bool: True if all transcript attributes match, False otherwise.
-        """
-
         gene_eq = self.gene == other.gene
         len_eq = self.__len__() == other.__len__()
         exn_cnt_eq = self.exon_count == other.exon_count
@@ -314,25 +357,12 @@ class Transcript(object):
         tx_start_eq = self.tx_start == other.tx_start
         tx_end_eq = self.tx_end == other.tx_end
         stand_eq = self.strand == other.strand
-        conditions = [
-            gene_eq,
-            len_eq,
-            exn_cnt_eq,
-            trsc_id_eq,
-            chrom_eq,
-            tx_start_eq,
-            tx_end_eq,
-            stand_eq,
-        ]
+        conditions = [gene_eq, len_eq, exn_cnt_eq, trsc_id_eq, chrom_eq, tx_start_eq, tx_end_eq, stand_eq]
         return all(conditions)
 
     def generate_inter_exon_distances(self):
         """
-        Generate the distances between each exon based on exon_starts/exon_ends.
-
-        Returns:
-            list of tuples: Each tuple contains the distance to the next exon
-                and the distance to the previous exon, for each exon in the transcript.
+        Generates distances between exons
         """
         inter_exon_dist_tuple = list(
             zip([x for x in self.exon_starts[:-1]], [x for x in self.exon_ends[1:]])
@@ -361,18 +391,6 @@ class Transcript(object):
         return exon_distance_list
 
     def calculate_relative_cds_start_end(self):
-        """
-        Calculate the coding sequence (CDS) start and end relative to the
-        concatenated transcript_intervals.
-
-        Returns:
-            tuple: (relative_cds_start, relative_cds_end),
-                   the 0-based indices within the full transcript for CDS start/end.
-
-        Raises:
-            AssertionError: If expand_exon_distance or expand_transcript_distance is non-zero,
-                            indicating the method is not valid for transcripts with introns/promoters expanded.
-        """
         assert self.expand_exon_distance == 0, "Doesn't work with introns"
         assert self.expand_transcript_distance == 0, "Doesn't work with promoters"
 
@@ -430,18 +448,6 @@ class Transcript(object):
         return relative_cds_start, relative_cds_end
 
     def calculate_relative_splice_sites(self):
-        """
-        Calculate the relative indices of the splice sites within the
-        concatenated transcript_intervals.
-
-        Returns:
-            list: A list of 0-based indices representing the last nucleotide
-                  in each exon within the full transcript.
-
-        Raises:
-            AssertionError: If expand_exon_distance or expand_transcript_distance is non-zero,
-                            meaning splice sites might not align with expansions.
-        """
         assert self.expand_exon_distance == 0, "Doesn't work with introns"
         assert self.expand_transcript_distance == 0, "Doesn't work with promoters"
         assert self.transcript_intervals
@@ -468,13 +474,9 @@ class Transcript(object):
         return indices
 
     def calculate_expand_distance(self):
-        """
-        Calculate expansion distance around each exon, ensuring there are no
-        overlaps between adjacent expanded regions.
+        """Calculates the expand distance for every single exon.
 
-        Returns:
-            list of tuples: Each tuple (up_expansion, down_expansion) gives the
-                expansion distance for each exon.
+        Makes sure there are no overlapping sequences.
         """
         exon_expand_distances = []
         for i in range(self.exon_count):
@@ -512,13 +514,6 @@ class Transcript(object):
         return exon_expand_distances
 
     def construct_transcript_intervals(self):
-        """
-        Construct Interval objects spanning the entire transcript,
-        including exon expansions and transcript expansions.
-
-        Returns:
-            list: A list of Interval objects covering the transcript and expansions.
-        """
         transcript_intervals = []
 
         # transcript expand distance
@@ -561,21 +556,7 @@ class Transcript(object):
     def one_hot_encode_transcript(
         self, pad_length_to: int = 0, zero_mean: bool = False, zero_pad: bool = False
     ):
-        """
-        Create a one-hot-encoded (or zero-mean) matrix for the entire transcript.
 
-        Args:
-            pad_length_to (int, optional): Length to which to pad the sequence.
-                If 0, no padding is applied. Defaults to 0.
-            zero_mean (bool, optional): Whether to subtract 0.25 from each one-hot
-                channel. Defaults to False.
-            zero_pad (bool, optional): If True, pads with zeros. If False, pads
-                with 0.25. Defaults to False.
-
-        Returns:
-            np.ndarray: Concatenated one-hot-encoded array of shape
-                (total_transcript_length, 4) or (pad_length_to, 4).
-        """
         if self.strand == "+":
             one_hot_list = [
                 x.one_hot_encode(zero_mean) for x in self.transcript_intervals
@@ -591,7 +572,9 @@ class Transcript(object):
             # check padding length is greater than the self length
             assert (
                 len(self) <= pad_length_to
-            ), f"Length of transcript {len(self)} greater than padding specified {pad_length_to}"
+            ), "Length of transcript {} greater than padding specified {}".format(
+                len(self), pad_length_to
+            )
             # N is represented as [0.25, 0.25, 0.25, 0.25]
 
             if len(self) < pad_length_to:
@@ -609,18 +592,6 @@ class Transcript(object):
         return concat_sequence
 
     def get_sequence(self, pad_length_to: int = 0):
-        """
-        Retrieve the concatenated nucleotide sequence for this transcript.
-
-        Args:
-            pad_length_to (int, optional): If > 0, pads the sequence to this length
-                by adding 'N' characters. Defaults to 0.
-
-        Returns:
-            str: The nucleotide sequence. If padding is applied, the padded portion
-                is represented by 'N's.
-        """
-
         if self.strand == "+":
             seqs = [x.sequence() for x in self.transcript_intervals]
         elif self.strand == "-":
@@ -660,109 +631,39 @@ class Transcript(object):
         """
 
         codon_map = {
-            "TTT": "F",
-            "CTT": "L",
-            "ATT": "I",
-            "GTT": "V",
-            "TTC": "F",
-            "CTC": "L",
-            "ATC": "I",
-            "GTC": "V",
-            "TTA": "L",
-            "CTA": "L",
-            "ATA": "I",
-            "GTA": "V",
-            "TTG": "L",
-            "CTG": "L",
-            "ATG": "M",
-            "GTG": "V",
-            "TCT": "S",
-            "CCT": "P",
-            "ACT": "T",
-            "GCT": "A",
-            "TCC": "S",
-            "CCC": "P",
-            "ACC": "T",
-            "GCC": "A",
-            "TCA": "S",
-            "CCA": "P",
-            "ACA": "T",
-            "GCA": "A",
-            "TCG": "S",
-            "CCG": "P",
-            "ACG": "T",
-            "GCG": "A",
-            "TAT": "Y",
-            "CAT": "H",
-            "AAT": "N",
-            "GAT": "D",
-            "TAC": "Y",
-            "CAC": "H",
-            "AAC": "N",
-            "GAC": "D",
-            "TAA": "*",
-            "CAA": "Q",
-            "AAA": "K",
-            "GAA": "E",
-            "TAG": "*",
-            "CAG": "Q",
-            "AAG": "K",
-            "GAG": "E",
-            "TGT": "C",
-            "CGT": "R",
-            "AGT": "S",
-            "GGT": "G",
-            "TGC": "C",
-            "CGC": "R",
-            "AGC": "S",
-            "GGC": "G",
-            "TGA": "*",
-            "CGA": "R",
-            "AGA": "R",
-            "GGA": "G",
-            "TGG": "W",
-            "CGG": "R",
-            "AGG": "R",
-            "GGG": "G",
+            'TTT': 'F', 'CTT': 'L', 'ATT': 'I', 'GTT': 'V',
+            'TTC': 'F', 'CTC': 'L', 'ATC': 'I', 'GTC': 'V',
+            'TTA': 'L', 'CTA': 'L', 'ATA': 'I', 'GTA': 'V',
+            'TTG': 'L', 'CTG': 'L', 'ATG': 'M', 'GTG': 'V',
+            'TCT': 'S', 'CCT': 'P', 'ACT': 'T', 'GCT': 'A',
+            'TCC': 'S', 'CCC': 'P', 'ACC': 'T', 'GCC': 'A',
+            'TCA': 'S', 'CCA': 'P', 'ACA': 'T', 'GCA': 'A',
+            'TCG': 'S', 'CCG': 'P', 'ACG': 'T', 'GCG': 'A',
+            'TAT': 'Y', 'CAT': 'H', 'AAT': 'N', 'GAT': 'D',
+            'TAC': 'Y', 'CAC': 'H', 'AAC': 'N', 'GAC': 'D',
+            'TAA': '*', 'CAA': 'Q', 'AAA': 'K', 'GAA': 'E',
+            'TAG': '*', 'CAG': 'Q', 'AAG': 'K', 'GAG': 'E',
+            'TGT': 'C', 'CGT': 'R', 'AGT': 'S', 'GGT': 'G',
+            'TGC': 'C', 'CGC': 'R', 'AGC': 'S', 'GGC': 'G',
+            'TGA': '*', 'CGA': 'R', 'AGA': 'R', 'GGA': 'G',
+            'TGG': 'W', 'CGG': 'R', 'AGG': 'R', 'GGG': 'G'
         }
 
-        protein_sequence = ""
+        protein_sequence = ''
         for i in range(0, len(dna_sequence), 3):
-            codon = dna_sequence[i : i + 3].upper()
-            protein_sequence += codon_map.get(codon, "?")
+            codon = dna_sequence[i:i + 3].upper()
+            protein_sequence += codon_map.get(codon, '?')
 
         return protein_sequence
 
     def get_amino_acid_sequence(self):
-        """
-        Retrieve the amino acid sequence by translating the coding sequence
-        within the transcript.
-
-        Returns:
-            str: The translated protein sequence (including '*' for stops).
-
-        Raises:
-            AssertionError: If expand_exon_distance or expand_transcript_distance is non-zero,
-                            since CDS coordinates assume no expansions.
-        """
         rel_cds_start, rel_cds_end = self.calculate_relative_cds_start_end()
         nt_sequence = self.get_sequence()
-        coding_sequence = nt_sequence[rel_cds_start:rel_cds_end]
+        coding_sequence = nt_sequence[rel_cds_start: rel_cds_end]
         aa_seq = Transcript.translate_dna(coding_sequence)
         return aa_seq
 
     def encode(self, pad_length_to: int = 0):
-        """
-        Encode the transcript nucleotides into numeric labels, optionally padding.
-
-        Args:
-            pad_length_to (int, optional): If > 0, pad the encoded array to this length
-                with 'N' (represented as 4). Defaults to 0.
-
-        Returns:
-            np.ndarray: Numeric array of shape (length_of_transcript,) or (pad_length_to,),
-                where {0,1,2,3,4} represent {A,C,T,G,N}.
-        """
         if self.strand == "+":
             seqs = np.concatenate(
                 [x.encode() for x in self.transcript_intervals]
@@ -771,8 +672,6 @@ class Transcript(object):
             seqs = np.concatenate(
                 [x.encode() for x in self.transcript_intervals[::-1]]
             ).flatten()
-        else:
-            raise ValueError
 
         if pad_length_to:
             # check padding length is greater than the self length
@@ -788,17 +687,6 @@ class Transcript(object):
         return seqs
 
     def encode_splice_track(self, pad_length_to: int = 0):
-        """
-        Encode splice sites as a binary track: 1 at splice site, 0 elsewhere.
-
-        Args:
-            pad_length_to (int, optional): If > 0, pad the array to this length.
-                Defaults to 0.
-
-        Returns:
-            np.ndarray: An array of shape (transcript_length or pad_length_to, 1)
-                where splice sites are marked with 1.
-        """
         rel_ss = self.calculate_relative_splice_sites()
 
         if pad_length_to == 0:
@@ -812,18 +700,7 @@ class Transcript(object):
         return ss_encoded.reshape(-1, 1)
 
     def encode_coding_sequence_track(self, pad_length_to: int = 0):
-        """
-        Encode coding sequence (CDS) positions. Mark the first base of each codon with 1.
 
-        Args:
-            pad_length_to (int, optional): Length to which to pad the track.
-                Defaults to 0.
-
-        Returns:
-            np.ndarray: An array of shape (transcript_length or pad_length_to, 1)
-                where the first nucleotide of each codon is marked with 1.
-                If there is no CDS, returns all zeros.
-        """
         rel_cds_start, rel_cds_end = self.calculate_relative_cds_start_end()
 
         if pad_length_to == 0:
@@ -846,28 +723,8 @@ class Transcript(object):
         pad_length_to: int = 0,
         zero_mean: bool = False,
         zero_pad: bool = False,
-        channels_last: bool = False,
+        channels_last: bool = False
     ):
-        """
-        Create a 6-channel track consisting of:
-            - One-hot-encoded or zero-mean-encoded sequence (4 channels).
-            - Coding sequence track (1 channel).
-            - Splice site track (1 channel).
-
-        Args:
-            pad_length_to (int, optional): If > 0, pad the sequence to this length.
-                Defaults to 0.
-            zero_mean (bool, optional): If True, subtract 0.25 from each one-hot channel.
-                Defaults to False.
-            zero_pad (bool, optional): If True, use zeros for padding; if False,
-                use 0.25. Defaults to False.
-            channels_last (bool, optional): If True, channels are last dimension (L, 6).
-                Otherwise, channels are first dimension (6, L). Defaults to False.
-
-        Returns:
-            np.ndarray: 6-channel track of shape (6, length) or (length, 6),
-                depending on channels_last.
-        """
         oh = self.one_hot_encode_transcript(
             pad_length_to=pad_length_to,
             zero_mean=zero_mean,
@@ -885,7 +742,6 @@ class Transcript(object):
         self,
         directory: str,
         skip_existing: bool = True,
-        channels_last: bool = False,
     ):
         """Store compressed transcript six-track encoding.
 
@@ -901,8 +757,7 @@ class Transcript(object):
         dir_path = Path(directory)
         dir_path.mkdir(parents=True, exist_ok=True)
 
-        save_name = f"{self.gene.replace('/', '_')}_{self.transcript_id.replace('/', '_')}_channels_last_{channels_last}.npz"
-        file_path = dir_path / save_name
+        save_name = "{}.npz".format(self.transcript_id)
 
         # Generate the file path based on gene and transcript_id
         file_path = dir_path / save_name
@@ -912,16 +767,23 @@ class Transcript(object):
 
         # Encode the 6-track data
         six_track_data = self.encode_6_track(
-            pad_length_to=0, zero_mean=False, zero_pad=True, channels_last=False
+            pad_length_to=0,
+            zero_mean=False,
+            zero_pad=True,
+            channels_last=False
         ).astype(np.uint8)
 
         # Serialize the 6-track data using np.savez_compressed
-        np.savez_compressed(file_path, six_track_data=six_track_data, length=len(self))
+        np.savez_compressed(
+            file_path,
+            six_track_data=six_track_data,
+            length=len(self)
+        )
 
     def load_6_track_encoding_npz(
         self,
         directory,
-        array_key="six_track_data",
+        array_key='six_track_data',
         pad_length_to=0,
         zero_mean=False,
         zero_pad=True,
@@ -929,32 +791,22 @@ class Transcript(object):
         mask_percentage=0.0,
     ):
         """
-        Load and process six-track encoding from a .npz file.
+        Loads and processes binary data saved as uint8 from a .npz file based on padding and normalization parameters.
 
-        Args:
-            directory (str): Directory containing the .npz file.
-            array_key (str, optional): Key under which the six-track data
-                was saved. Defaults to 'six_track_data'.
-            pad_length_to (int, optional): Length to which sequence should be padded.
-                If 0, no additional padding is applied. Defaults to 0.
-            zero_mean (bool, optional): If True, subtract 0.25 from each one-hot channel.
-                Defaults to False.
-            zero_pad (bool, optional): If True, use zeros for padding; if False, use 0.25.
-                Defaults to True.
-            channels_last (bool, optional): If True, channels dimension is last.
-                Defaults to False.
-            mask_percentage (float, optional): Percentage of data to randomly mask.
-                Defaults to 0.0.
-
-        Returns:
-            np.ndarray: The loaded and processed six-track data.
+        :param directory: The directory from which to load the .npz file.
+        :param array_key: The key that was used to save the binary data in the .npz file.
+        :param pad_length_to: The length to which the sequence should be padded.
+        :param zero_mean: Whether the data should be zero-mean normalized.
+        :param zero_pad: Whether the padding should use zeros or a constant value.
+        :param mask_percentage: The percentage of the data to randomly mask.
+        :return: A NumPy array of the processed binary data.
         """
         # Construct the file path using gene and transcript_id
         file_path = os.path.join(
             directory,
             f"{self.gene.replace('/', '_')}_"
             f"{self.transcript_id.replace('/', '_')}_"
-            f"channels_last_{channels_last}.npz",
+            f"channels_last_{channels_last}.npz"
         )
 
         # Load the data from the .npz file
@@ -973,9 +825,7 @@ class Transcript(object):
             num_elements_to_mask = int(binary_data.shape[mask_dim] * mask_percentage)
 
             # Generate random indices along the selected dimension for masking
-            mask_indices = np.random.choice(
-                binary_data.shape[mask_dim], num_elements_to_mask, replace=False
-            )
+            mask_indices = np.random.choice(binary_data.shape[mask_dim], num_elements_to_mask, replace=False)
 
             # Apply the mask
             if channels_last:
@@ -986,23 +836,13 @@ class Transcript(object):
         # Process the loaded data based on pad_length_to, zero_mean, and zero_pad
         if len(binary_data) < pad_length_to:
             if channels_last:
-                pad_sequence = np.zeros(
-                    (pad_length_to - len(binary_data), binary_data.shape[1]),
-                    dtype=np.uint8,
-                )
-                binary_data = np.vstack(
-                    (binary_data, pad_sequence)
-                )  # Append the padding to the original data
+                pad_sequence = np.zeros((pad_length_to - len(binary_data), binary_data.shape[1]), dtype=np.uint8)
+                binary_data = np.vstack((binary_data, pad_sequence))  # Append the padding to the original data
             else:
-                pad_sequence = np.zeros(
-                    (binary_data.shape[0], pad_length_to - binary_data.shape[1]),
-                    dtype=np.uint8,
-                )
-                binary_data = np.hstack(
-                    (binary_data, pad_sequence)
-                )  # Append the padding to the original data
+                pad_sequence = np.zeros((binary_data.shape[0], pad_length_to - binary_data.shape[1]), dtype=np.uint8)
+                binary_data = np.hstack((binary_data, pad_sequence))  # Append the padding to the original data
 
-            if not zero_pad:
+            if zero_pad == False:
                 pad_sequence = pad_sequence.astype(np.float16) + 0.25
 
         # Optionally, apply zero-mean normalization
@@ -1011,61 +851,36 @@ class Transcript(object):
 
     def check_serialized_version_exists(self, directory, channels_last=False):
         """
-        Check if a serialized six-track .npz file already exists for this transcript.
+        Checks if there is a serialized version of the sequence available in the specified directory.
 
-        Args:
-            directory (str): Directory to check for the file.
-            channels_last (bool, optional): Whether the channels dimension is last.
-                Defaults to False.
-
-        Returns:
-            bool: True if the file exists, False otherwise.
+        :param directory: The directory to check for the serialized file.
+        :return: True if the serialized file exists, False otherwise.
         """
         # Construct the expected file path
-        file_path = os.path.join(
-            directory,
-            f"{self.gene}_{self.transcript_id}_channels_last_{channels_last}.npz",
-        )
+        file_path = os.path.join(directory, f"{self.gene}_{self.transcript_id}_channels_last_{channels_last}.npz")
 
         # Check if the file exists at the path
         return os.path.exists(file_path)
 
 
+# %% ../nbs/data.ipynb 8
 class RefseqDataset:
-    """
-    A dataset class that stores a collection of Transcript objects,
-    providing utilities for bulk encoding and dataset operations.
-    """
+    """Refseq dataset."""
 
     def __init__(self, transcript_list: List[Transcript]):
         assert all(
-            [isinstance(x, Transcript) for x in transcript_list]
+            [type(x) == Transcript for x in transcript_list]
         ), "Not transcripts passed into dataset {}".format(
             pd.value_counts([type(x) for x in transcript_list])
         )
         self.transcripts = transcript_list
         self.max_transcript_length = np.max([len(t) for t in self.transcripts])
-        self.valid_chromosomes = ["chr{}".format(i) for i in range(1, 23)]
+        self.valid_chromosomes = ["chr{}".format(i) for i in range(23)]
 
     def __len__(self):
-        """
-        Return the number of transcripts in this dataset.
-
-        Returns:
-            int: Number of Transcript objects.
-        """
         return len(self.transcripts)
 
     def __getitem__(self, idx):
-        """
-        Get a transcript by index.
-
-        Args:
-            idx (int): Index in the dataset.
-
-        Returns:
-            Transcript: The Transcript object at the specified index.
-        """
         return self.transcripts[idx]
 
     @classmethod
@@ -1076,23 +891,26 @@ class RefseqDataset:
         chromosomes_to_use: list[str] | None,
         drop_non_nm: bool = False,
     ) -> pd.DataFrame:
-        """
-        Load a RefSeq annotation file into a pandas DataFrame.
+        """Load RefSeq annotation file into pandas dataframe.
 
         Args:
-            refseq_path (str): Path to RefSeq annotation file (CSV/TSV).
-            mini (bool): If True, load a small subset (1000 lines) of the file.
-            chromosomes_to_use (list[str] | None): A list of chromosomes to keep,
-                or None to keep all chromosomes.
-            drop_non_nm (bool, optional): If True, removes non-coding transcripts
-                (i.e., those whose names don't start with 'NM'). Defaults to False.
+            refseq_path: Path to refseq annotation.
+            mini: Loads subset of all annootations.
+            chromosomes_to_use:
+                Only annotations from chromosomes in this list are kept. Set
+                to None if no filtering is desired.
+            drop_non_nm: Removes non-coding transcripts.
 
         Returns:
-            pd.DataFrame: The loaded DataFrame, potentially filtered by chromosome
-                and transcript type.
+            Dataframe of all filtered anotations from refseq file.
         """
         if mini:
-            df = pd.read_csv(refseq_path, compression="infer", sep="\t", nrows=1000)
+            df = pd.read_csv(
+                refseq_path,
+                compression="infer",
+                sep="\t",
+                nrows=1000
+            )
         else:
             df = pd.read_csv(refseq_path, compression="infer", sep="\t")
 
@@ -1111,20 +929,18 @@ class RefseqDataset:
         df: pd.DataFrame,
         expand_transcript_distance: int,
         expand_exon_distance: int,
-        genome: Genome,
+        genome: Genome
     ) -> list[Transcript]:
-        """
-        Convert a RefSeq annotation DataFrame into a list of Transcript objects.
+        """Initialize Transcript for each annotation in refseq df.
 
         Args:
-            df (pd.DataFrame): DataFrame containing RefSeq annotations.
-            expand_transcript_distance (int): Distance to expand upstream/downstream
-                of the transcript.
-            expand_exon_distance (int): Distance to expand around each exon.
-            genome (Genome): Genome object providing sequence/encoding methods.
+            df: DataFrame containing refseq annotations.
+            expand_transcript_distance:
+            expand_exon_distance:
+            genome: Genome associated with annotation.
 
         Returns:
-            list[Transcript]: A list of initialized Transcript objects.
+            List of Transcript objects.
         """
         transcripts = []
         for index, row in df.iterrows():
@@ -1163,26 +979,21 @@ class RefseqDataset:
         expand_exon_distance: int = 0,
         mini: bool = False,
         drop_non_nm: bool = False,
-        use_human_chrs: bool = True,
+        use_human_chrs: bool = True
     ) -> list[Transcript]:
-        """
-        Load transcripts from a RefSeq annotation file into a list of Transcript objects.
+        """Load transcripts from refseq annotation.
 
         Args:
-            refseq_path (str): Path to the RefSeq annotation CSV/TSV.
-            genome (Genome): Genome object providing sequence/encoding methods.
-            expand_transcript_distance (int, optional): Distance to expand upstream/downstream
-                of the transcript. Defaults to 0.
-            expand_exon_distance (int, optional): Distance to expand around each exon.
-                Defaults to 0.
-            mini (bool, optional): If True, loads only a small subset (1000 lines). Defaults to False.
-            drop_non_nm (bool, optional): If True, only coding transcripts (names starting 'NM') are used.
-                Defaults to False.
-            use_human_chrs (bool, optional): If True, only chromosomes 'chr1' through 'chr22' and 'chrX'
-                (23 total) are used. Defaults to True.
+            refseq_path: Path to refseq annotation csv.
+            genome: Genome associated with annotations.
+            expand_transcript_distance:
+            expand_exon_distance:
+            mini: Selects subset of annotations to use.
+            drop_non_nm: Selects only coding transcripts.
+            use_human_chrs: Selects transcripts from only first 23 chrs.
 
         Returns:
-            list[Transcript]: The loaded Transcript objects.
+            List of transcripts loaded from refseq annotations.
         """
         if use_human_chrs:
             chromosomes_to_use = ["chr{}".format(i) for i in range(23)]
@@ -1197,7 +1008,10 @@ class RefseqDataset:
         )
 
         transcripts = RefseqDataset.refseq_df_to_transcripts(
-            df, expand_transcript_distance, expand_exon_distance, genome
+            df,
+            expand_transcript_distance,
+            expand_exon_distance,
+            genome
         )
         return transcripts
 
@@ -1207,23 +1021,7 @@ class RefseqDataset:
         zero_mean: bool = True,
         split_transcript: int = 0,
     ) -> np.array:
-        """
-        One-hot-encode all transcripts in the dataset.
 
-        Args:
-            pad_length_to (int, optional): If > 0, all transcripts will be padded
-                to this length. Defaults to 0, meaning no padding.
-            zero_mean (bool, optional): If True, subtract 0.25 from each one-hot channel.
-                Defaults to True.
-            split_transcript (int, optional): If > 0, each transcript is split into
-                chunks of size `split_transcript` after encoding. Defaults to 0.
-
-        Returns:
-            np.ndarray: A NumPy array of shape (N, L, 4) if not split, where N is the
-                number of transcripts (or chunks if split) and L is `pad_length_to`
-                or the transcript length. If split, shape is (M, split_transcript, 4),
-                where M is the total number of chunks.
-        """
         # if pad_length_to is not set set it to the maximum length of the transcript
         if not pad_length_to:
             pad_length_to = self.max_transcript_length
@@ -1267,17 +1065,6 @@ class RefseqDataset:
         return padded_dataset
 
     def get_sequence_dataset(self, pad_length_to: int = 0) -> np.array:
-        """
-        Get the concatenated nucleotide sequences of all transcripts in the dataset.
-
-        Args:
-            pad_length_to (int, optional): If > 0, pad sequences to this length
-                with 'N'. Defaults to 0.
-
-        Returns:
-            np.ndarray: An array of shape (N,) where each element is the padded
-                nucleotide sequence string of a transcript.
-        """
         if not pad_length_to:
             pad_length_to = self.max_transcript_length
 
@@ -1294,20 +1081,7 @@ class RefseqDataset:
     def get_encoded_dataset(
         self, pad_length_to: int = 0, split_transcript: int = 0
     ) -> np.array:
-        """
-        Get the numeric-encoded dataset (A->0, C->1, T->2, G->3, N->4).
 
-        Args:
-            pad_length_to (int, optional): If > 0, pad each transcript to this length.
-                Defaults to 0.
-            split_transcript (int, optional): If > 0, split each transcript
-                into chunks of this size. Defaults to 0.
-
-        Returns:
-            np.ndarray: Encoded dataset array. Shape depends on splitting:
-                - Not split: (N, pad_length_to)
-                - Split: (M, split_transcript), where M is the total number of chunks.
-        """
         if not pad_length_to:
             pad_length_to = self.max_transcript_length
 
@@ -1348,9 +1122,6 @@ class RefseqDataset:
         return padded_dataset
 
     def drop_long_transcripts(self, max_length: int):
-        """
-        Drop transcripts that exceed a certain length.
-        """
         # count number of long transcripts
         number_of_long_transcripts = len(
             [x for x in self.transcripts if len(x) > max_length]
@@ -1366,11 +1137,4 @@ class RefseqDataset:
             )
 
     def transcript_lengths(self):
-        """
-        Get descriptive statistics for lengths of transcripts in the dataset.
-
-        Returns:
-            dict: A dictionary containing pandas descriptive stats
-                  (e.g., mean, std, min, max, etc.) for transcript lengths.
-        """
         return dict(pd.Series([len(x) for x in self.transcripts]).describe())

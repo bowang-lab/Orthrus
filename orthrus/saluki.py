@@ -167,3 +167,41 @@ class SalukiModel(nn.Module):
     def representation(self, inputs, lengths=None):
         x = self.forward(inputs)
         return x
+
+
+def saluki_small(
+    num_classes,
+    seq_depth=6,
+    dropout_prob=0.3,
+    add_shift=True,
+    final_layer=True
+):
+    return SalukiModel(
+        heads=num_classes,
+        seq_depth=seq_depth,
+        dropout=dropout_prob,
+        add_shift=add_shift,
+        final_layer=final_layer,
+        filters=64,
+        kernel_size=5,
+        num_layers=6,
+    )
+
+
+def saluki_medium(
+    num_classes,
+    seq_depth=6,
+    dropout_prob=0.3,
+    add_shift=True,
+    final_layer=True
+):
+    return SalukiModel(
+        heads=num_classes,
+        seq_depth=seq_depth,
+        dropout=dropout_prob,
+        add_shift=add_shift,
+        final_layer=final_layer,
+        filters=512,
+        num_layers=6,
+        kernel_size=5,
+    )

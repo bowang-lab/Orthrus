@@ -18,6 +18,7 @@ class DilatedResnet(nn.Module):
         add_shift=True,
         n_tracks=6,
         global_pooling_layer='avgpool',
+        final_layer=False,
     ):
         super(DilatedResnet, self).__init__()
         self.num_classes = num_classes
@@ -66,7 +67,11 @@ class DilatedResnet(nn.Module):
             self.avgpool = MyDynamicAvgPool1d()
         else:
             raise ValueError
-        self.fc = nn.Linear(filter_nums[-1], num_classes)
+        
+        if final_layer:
+            self.fc = nn.Linear(filter_nums[-1], num_classes)
+        else:
+            self.fc = nn.Identity()
 
     def forward(self, x, lengths=None):
         x = self.representation(x, lengths=lengths)
@@ -103,6 +108,7 @@ def dilated_small(
     add_shift=True,
     increase_dilation=False,
     global_pooling_layer='avgpool',
+    final_layer=False,
 ):
     return DilatedResnet(
         num_classes=num_classes,
@@ -116,6 +122,35 @@ def dilated_small(
         increase_dilation=increase_dilation,
         add_shift=add_shift,
         global_pooling_layer=global_pooling_layer,
+        final_layer=final_layer,
+    )
+
+
+def dilated_medium(
+    num_classes,
+    dropout_prob=0.1,
+    norm_type="batchnorm",
+    dilation_params=(1, 2, 4, 8),
+    kernel_size=4,
+    pooling_layer='avgpool',
+    add_shift=True,
+    increase_dilation=False,
+    global_pooling_layer='avgpool',
+    final_layer=False,
+):
+    return DilatedResnet(
+        num_classes=num_classes,
+        filter_nums=(64, 128, 256, 512),
+        layer_params=(3, 4, 6, 3),
+        dropout_prob=dropout_prob,
+        dilation_params=dilation_params,
+        norm_type=norm_type,
+        kernel_size=kernel_size,
+        pooling_layer=pooling_layer,
+        increase_dilation=increase_dilation,
+        add_shift=add_shift,
+        global_pooling_layer=global_pooling_layer,
+        final_layer=final_layer,
     )
 
 
@@ -129,6 +164,7 @@ def not_dilated_small(
     add_shift=True,
     increase_dilation=False,
     global_pooling_layer='avgpool',
+    final_layer=False,
 ):
     return DilatedResnet(
         num_classes=num_classes,
@@ -142,5 +178,6 @@ def not_dilated_small(
         increase_dilation=increase_dilation,
         add_shift=add_shift,
         global_pooling_layer=global_pooling_layer,
+        final_layer=final_layer,
     )
     

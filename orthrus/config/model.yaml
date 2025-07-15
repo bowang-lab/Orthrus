@@ -13,6 +13,25 @@ mamba_base: &mamba_base
   model_class: "ssm"
   ssm_model_dim: 256
   ssm_n_layers: 3
+  n_tracks: 6
+  predict_splice_codon: False
+  predict_masked: False
+  bidirectional:
+  bidirectional_strategy: "add"
+  bidirectional_weight_tie: True
+  gradient_checkpointing: False
+
+mamba_base_4t: &mamba_base_4t
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 3
+  n_tracks: 4
+  predict_splice_codon: False
+  predict_masked: False
+  bidirectional:
+  bidirectional_strategy: "add"
+  bidirectional_weight_tie: True
+  gradient_checkpointing: False
 
 mamba_large: &mamba_large
   model_class: "ssm"
@@ -21,46 +40,75 @@ mamba_large: &mamba_large
   n_tracks: 6
   predict_splice_codon: False
   predict_masked: False
+  bidirectional:
+  bidirectional_strategy: "add"
+  bidirectional_weight_tie: True
+  gradient_checkpointing: False
 
 mamba_large_4t: &mamba_large_4t
   model_class: "ssm"
   ssm_model_dim: 512
   ssm_n_layers: 4
   n_tracks: 4
+  predict_splice_codon: False
+  predict_masked: False
+  bidirectional:
+  bidirectional_strategy: "add"
+  bidirectional_weight_tie: True
+  gradient_checkpointing: False
+
+mamba_deep_4t: &mamba_deep_4t
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 6
+  n_tracks: 4
+  predict_splice_codon: False
+  predict_masked: False
+  bidirectional:
+  bidirectional_strategy: "add"
+  bidirectional_weight_tie: True
+  gradient_checkpointing: False
 
 mamba_deep: &mamba_deep
   model_class: "ssm"
   ssm_model_dim: 512
   ssm_n_layers: 6
   n_tracks: 6
-
-mamba_large_mlm:
-  <<: *mamba_large
-  predict_masked: True
   predict_splice_codon: False
+  predict_masked: False
+  bidirectional:
+  bidirectional_strategy: "add"
+  bidirectional_weight_tie: True
+  gradient_checkpointing: False
 
-mamba_deep_mlm:
-  <<: *mamba_deep
-  predict_masked: True
-  predict_splice_codon: False
-
-mamba_large_mlm_4t:
-  <<: *mamba_large_4t
-  predict_masked: True
-  predict_splice_codon: True
-
-mamba_grid_6t:
-  model_class: "ssm"
-  ssm_model_dim: 256
-  ssm_n_layers: 3
+dilated_resnet_small: &dilated_resnet_small
+  model_class: "resnet"
+  resnet: "dilated_small"
+  num_classes: 1
   n_tracks: 6
   predict_splice_codon: False
   predict_masked: False
 
-mamba_grid_4t:
-  model_class: "ssm"
-  ssm_model_dim: 256
-  ssm_n_layers: 3
-  n_tracks: 4
+dilated_resnet_medium: &dilated_resnet_medium
+  model_class: "resnet"
+  resnet: "dilated_medium"
+  num_classes: 1
+  n_tracks: 6
+  predict_splice_codon: False
+  predict_masked: False
+
+saluki_small: &saluki_small
+  model_class: "saluki"
+  saluki: "saluki_small"
+  num_classes: 1
+  n_tracks: 6
+  predict_splice_codon: False
+  predict_masked: False
+
+saluki_medium: &saluki_medium
+  model_class: "saluki"
+  saluki: "saluki_medium"
+  num_classes: 1
+  n_tracks: 6
   predict_splice_codon: False
   predict_masked: False

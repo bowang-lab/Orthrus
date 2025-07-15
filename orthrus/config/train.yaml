@@ -2,8 +2,28 @@ default: &default
   rand_seed: 0
   number_steps: 20000
   mixed_precision: True
-  wandb_run_dir: "/data1/morrisq/ian/rna_contrast/runs"
+  wandb_run_dir: "/home/dalalt1/compute/Orthrus/runs"
   split_by_length: True
+  mlm_end_weight:
+  mlm_anneal_steps:
+  mlm_start_weight:
+  mask_prop: 0.0
+  logging: True
+  reconstruct_unmasked_prop: 0.0
+
+ablation: &ablation
+  rand_seed: 0
+  number_steps: 20000
+  mixed_precision: True
+  wandb_run_dir: "/data1/morrisq/fradkinp/ablation_runs"
+  split_by_length: True
+  mlm_end_weight:
+  mlm_anneal_steps:
+  mlm_start_weight:
+  mask_prop: 0.0
+  logging: True
+  reconstruct_unmasked_prop: 0.0
+
 
 a40_ssm_256_3:
   <<: *default
@@ -26,10 +46,28 @@ a100_ssm_512_4_quarter:
   <<: *default
   gpu_batch_sizes: [15, 50, 15]
 
+a100_ssm_512_6_huge:
+  <<: *default
+  number_steps: 20000
+  gpu_batch_sizes: [25, 75, 25]
+  mask_prop: 0.0
+
 a100_ssm_512_6:
   <<: *default
+  rand_seed: 0
   gpu_batch_sizes: [50, 150, 50]
   mask_prop: 0.0
+  number_steps: 20000
+
+a100_ssm_512_6_mlm_only_randseed0:
+  <<: *default
+  rand_seed: 0
+  gpu_batch_sizes: [45, 130, 45]
+  mask_prop: 0.15
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 1.7
+  mlm_end_weight: 1.7
 
 a100_ssm_512_4_long:
   <<: *default
@@ -40,17 +78,108 @@ a100_ssm_512_4_mlm:
   <<: *default
   gpu_batch_sizes: [55, 170, 55]
   mask_prop: 0.15
+  mlm_end_weight: 2.0
+  mlm_anneal_steps: 5000
+  mlm_start_weight: 1.0
 
-a100_ssm_512_6_mlm:
+a100_ssm_512_6_deep_mlm_05_95:
   <<: *default
-  gpu_batch_sizes: [45, 130, 45]
+  gpu_batch_sizes: [30, 130, 30]
+  rand_seed: 0
   mask_prop: 0.15
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 0.95
+  mlm_end_weight: 0.95
+  cl_anneal_steps: 20000
+  cl_start_weight: 0.05
+  cl_end_weight: 0.05
+
+a100_ssm_512_6_deep_mlm_50_50:
+  <<: *default
+  gpu_batch_sizes: [30, 130, 30]
+  rand_seed: 0
+  mask_prop: 0.15
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 0.5
+  mlm_end_weight: 0.5
+  cl_anneal_steps: 20000
+  cl_start_weight: 0.5
+  cl_end_weight: 0.5
+
+a100_ssm_512_6_deep_mlm_95_05:
+  <<: *default
+  gpu_batch_sizes: [30, 130, 30]
+  rand_seed: 0
+  mask_prop: 0.15
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 0.05
+  mlm_end_weight: 0.05
+  cl_anneal_steps: 20000
+  cl_start_weight: 0.95
+  cl_end_weight: 0.95
 
 a40_grid:
   rand_seed: 0
   number_steps: 20000
   mixed_precision: True
-  wandb_run_dir: "/data1/morrisq/ian/rna_contrast/grid_runs"
+  wandb_run_dir: "/home/dalalt1/compute/Orthrus/runs"
   split_by_length: True
   gpu_batch_sizes: [40, 240, 40]
   mask_prop: 0.0
+
+
+a100_ssm_512_6_deep_mlm_05_95_ablation:
+  <<: *ablation
+  gpu_batch_sizes: [30, 130, 30]
+  rand_seed: 0
+  mask_prop: 0.15
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 0.95
+  mlm_end_weight: 0.95
+  cl_anneal_steps: 20000
+  cl_start_weight: 0.05
+  cl_end_weight: 0.05
+
+a100_ssm_512_6_deep_only_cl_ablation:
+  <<: *ablation
+  gpu_batch_sizes: [30, 130, 30]
+  rand_seed: 0
+  mask_prop: 0.0
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 0.0
+  mlm_end_weight: 0.0
+  cl_anneal_steps: 20000
+  cl_start_weight: 1.0
+  cl_end_weight: 1.0
+
+a100_ssm_512_6_deep_only_mlm_ablation:
+  <<: *ablation
+  gpu_batch_sizes: [30, 130, 30]
+  rand_seed: 0
+  mask_prop: 0.15
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 1.0
+  mlm_end_weight: 1.0
+  cl_anneal_steps: 20000
+  cl_start_weight: 0.0
+  cl_end_weight: 0.0
+
+
+a100_cnn_512_6_deep_cl:
+  <<: *ablation
+  gpu_batch_sizes: [20, 80, 20]
+  rand_seed: 0
+  mask_prop: 0.0
+  number_steps: 20000
+  mlm_anneal_steps: 20000
+  mlm_start_weight: 0.0
+  mlm_end_weight: 0.0
+  cl_anneal_steps: 20000
+  cl_start_weight: 1.0
+  cl_end_weight: 1.0

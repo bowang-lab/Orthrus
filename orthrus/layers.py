@@ -2,14 +2,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-
 def return_norm_layer(norm_type, num_features):
     if norm_type == "batchnorm":
         return nn.BatchNorm1d(num_features)
     # Add more normalization types if needed
     else:
         return nn.Identity()
-
 
 class DilatedConv1DBasic(nn.Module):
     def __init__(
@@ -24,7 +22,7 @@ class DilatedConv1DBasic(nn.Module):
         norm_type="batchnorm",
     ):
         super(DilatedConv1DBasic, self).__init__()
-
+        
         self.norm_type = norm_type
         self.filter_num = filter_num
 
@@ -35,10 +33,10 @@ class DilatedConv1DBasic(nn.Module):
             )
         else:
             self.downsample = nn.Identity()
-
+       
         self.conv1 = nn.Conv1d(in_channels=in_channels, out_channels=filter_num, kernel_size=kernel_size, padding=padding, dilation=dilation)
         self.bn1 = return_norm_layer(norm_type, filter_num)
-
+        
         self.conv2 = nn.Conv1d(in_channels=filter_num, out_channels=filter_num, kernel_size=kernel_size, padding=padding, dilation=dilation)
         self.bn2 = return_norm_layer(norm_type, filter_num)
 
@@ -73,28 +71,27 @@ class DilatedConv1DBasic(nn.Module):
 
         return x
 
-
 class DilatedBasicBlockLayer(nn.Module):
     def __init__(
-        self,
-        in_channels,
-        filter_num=21,
-        kernel_size=8,
-        padding='same',
-        dropout_prob=0.1,
-        dilation=2,
-        pooling_layer='max_pool',
-        blocks=2,
-        norm_type="batchnorm",
+        self, 
+        in_channels, 
+        filter_num=21, 
+        kernel_size=8, 
+        padding='same', 
+        dropout_prob=0.1, 
+        dilation=2, 
+        pooling_layer='max_pool', 
+        blocks=2, 
+        norm_type="batchnorm", 
         increase_dilation=True
     ):
         super(DilatedBasicBlockLayer, self).__init__()
         self.layers = nn.ModuleList()
-
+        
         for i in range(blocks):
             # Adjust dilation rate if needed
             current_dilation = dilation * (2**i) if increase_dilation else dilation
-
+            
             # Assuming DilatedConv1DBasic is already defined as discussed
             self.layers.append(
                 DilatedConv1DBasic(
@@ -102,7 +99,7 @@ class DilatedBasicBlockLayer(nn.Module):
                     filter_num=filter_num,
                     kernel_size=kernel_size,
                     padding=padding,
-                    dropout_prob=dropout_prob,
+                    dropout_prob=dropout_prob, 
                     dilation=current_dilation,
                     pooling_layer=pooling_layer if i == blocks - 1  else '',  # Apply max pooling only the last block
                     norm_type=norm_type,
@@ -151,6 +148,37 @@ class ProjectionHead(nn.Module):
         return x
 
 
+class SequenceProjectionHead(nn.Module):
+    def __init__(
+        self,
+        input_features: int,
+        projection_body: int,
+        projection_head_size: int,
+        norm_type: str
+    ):
+        super().__init__()
+        self.fc1 = nn.Linear(input_features, projection_body)
+        self.norm1 = return_norm_layer(norm_type, projection_body)
+        self.fc2 = nn.Linear(projection_body, projection_body)
+        self.norm2 = return_norm_layer(norm_type, projection_body)
+        self.fc3 = nn.Linear(projection_body, projection_head_size, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.fc1(x)
+        x = x.permute(0, 2, 1)
+        x = self.norm1(x)
+        x = x.permute(0, 2, 1)
+        x = F.relu(x)
+
+        x = self.fc2(x)
+        x = x.permute(0, 2, 1)
+        x = self.norm2(x)
+        x = x.permute(0, 2, 1)
+        x = F.relu(x)
+        x = self.fc3(x)
+        return x
+
+
 class StochasticShift(nn.Module):
     """Stochastically shift a one-hot encoded DNA sequence in PyTorch."""
 
@@ -163,7 +191,7 @@ class StochasticShift(nn.Module):
             self.augment_shifts = torch.arange(-self.shift_max, self.shift_max + 1)
         else:
             self.augment_shifts = torch.arange(0, self.shift_max + 1)
-
+            
     def forward(self, seq_1hot):
         if self.training:
             shift_i = torch.randint(0, len(self.augment_shifts), (1,)).item()
@@ -180,7 +208,7 @@ class StochasticShift(nn.Module):
         """Shifts the sequence by the specified amount with padding."""
         if seq.dim() != 3:
             raise ValueError("input sequence should be rank 3")
-
+        
         batch_size, channels, seq_length = seq.size()
         pad_size = abs(shift)
 
@@ -205,18 +233,18 @@ class MyDynamicAvgPool1d(nn.Module):
     def forward(self, x, lengths=None):
         """
         Forward pass of the EfficientDynamicAvgPool1d layer.
-
+        
         Args:
             x (Tensor): The input tensor of shape :math:`(N, C, L_{in})`.
             lengths (Tensor): A tensor of shape :math:`(N,)` indicating the length up to which to average for each sample.
-
+        
         Returns:
             Tensor: The output tensor of shape :math:`(N, C)`.
         """
         # Create a mask based on lengths
-        if lengths is not None:
+        if lengths != None:
             max_length = x.size(2)
-
+            
             # lengths must be smaller than max_length
             lengths = torch.clamp(lengths, max= max_length)
             # Create a mask based on lengths
