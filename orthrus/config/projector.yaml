@@ -21,13 +21,3 @@ grid:
   projection_head_size: 128
   projection_norm_type: batchnorm
   representation_dim: 256
-
-default_dino:
-  <<: *default
-  representation_dim: 512
-  projection_body:: 1024
-  projection_head_size: 2048
-  projection_bottleneck: 256
-  projection_norm_type: ""
-  projection_n_layers: 3
-  projection_norm_last_layer: True

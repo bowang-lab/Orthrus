@@ -52,40 +52,6 @@ a100_ssm_512_6_huge:
   gpu_batch_sizes: [25, 75, 25]
   mask_prop: 0.0
 
-a100_ssm_512_18:
-  <<: *default
-  number_steps: 40000
-  gpu_batch_sizes: [16, 50, 16]
-  mask_prop: 0.0
-
-a100_ssm_512_18_mlm_only:
-  <<: *default
-  number_steps: 40000
-  number_epochs: 35
-  gpu_batch_sizes: [10, 40, 10]
-  mask_prop: 0.15
-
-a100_ssm_512_6_huge_18_mlm:
-  <<: *default
-  number_steps: 23600
-  gpu_batch_sizes: [18, 54, 18]
-  mask_prop: 0.15
-  mlm_end_weight: 2.0
-  mlm_anneal_steps: 5000
-  mlm_start_weight: 1.0
-  cl_start_weight: 1.5
-  cl_anneal_steps: 5000
-  cl_end_weight: 1.0
-
-a100_ssm_512_6_huge_mlm:
-  <<: *default
-  number_steps: 20000 #22132
-  gpu_batch_sizes: [25, 75, 25] #[22, 65, 22]
-  mask_prop: 0.15
-  mlm_end_weight: 2.0
-  mlm_anneal_steps: 5000
-  mlm_start_weight: 1.0
-
 a100_ssm_512_6:
   <<: *default
   rand_seed: 0
@@ -155,30 +121,6 @@ a100_ssm_512_6_deep_mlm_95_05:
   cl_start_weight: 0.95
   cl_end_weight: 0.95
 
-a100_ssm_512_80_mlm:
-  <<: *default
-  gpu_batch_sizes: [18, 54, 18]
-  mask_prop: 0.15
-  number_steps: 28400
-  mlm_anneal_steps: 14200
-  mlm_start_weight: 0.0
-  mlm_end_weight: 3.0
-  cl_anneal_steps: 28400
-  cl_start_weight: 1.0
-  cl_end_weight: 1.0
-
-a100_ssm_1024_12_mlm_checkpointing:
-  <<: *default
-  gpu_batch_sizes: [18, 54, 18]
-  mask_prop: 0.15
-  number_steps: 30000
-  mlm_anneal_steps: 30000
-  mlm_start_weight: 0.95
-  mlm_end_weight: 0.95
-  cl_anneal_steps: 30000
-  cl_start_weight: 0.05
-  cl_end_weight: 0.05
-
 a40_grid:
   rand_seed: 0
   number_steps: 20000
@@ -241,31 +183,3 @@ a100_cnn_512_6_deep_cl:
   cl_anneal_steps: 20000
   cl_start_weight: 1.0
   cl_end_weight: 1.0
-
-a100_ssm_512_6_deep_mlm_05_95_ablation_unmasked_05:
-  <<: *ablation
-  gpu_batch_sizes: [30, 130, 30]
-  rand_seed: 0
-  mask_prop: 0.15
-  number_steps: 20000
-  mlm_anneal_steps: 20000
-  mlm_start_weight: 0.95
-  mlm_end_weight: 0.95
-  cl_anneal_steps: 20000
-  cl_start_weight: 0.05
-  cl_end_weight: 0.05
-  reconstruct_unmasked_prop: 0.05
-
-a100_ssm_512_6_deep_only_mlm_unmasked_05:
-  <<: *ablation
-  gpu_batch_sizes: [30, 130, 30]
-  rand_seed: 0
-  mask_prop: 0.15
-  number_steps: 20000
-  mlm_anneal_steps: 20000
-  mlm_start_weight: 1.7
-  mlm_end_weight: 1.7
-  cl_anneal_steps: 20000
-  cl_start_weight: 0.0
-  cl_end_weight: 0.0
-  reconstruct_unmasked_prop: 0.05
