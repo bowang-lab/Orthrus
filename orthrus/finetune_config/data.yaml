@@ -1,0 +1,101 @@
+base: &base
+  n_tracks: 6
+  subset_n_samples: null
+  subset_fraction: 1.0
+  multi_seed: [0, 1, 2]
+  subset_start:
+  subset_end:
+
+# ---------------- LOCAL TASKS ---------------- #
+
+eclip_binding_hepg2:
+  <<: *base
+  species: human
+  dataset_name: eclip-binding-hepg2
+  # target_col: target_AATF # there are many targets, check eclip_binding.py
+  split_type: homology
+  # task: classification
+  num_classes: 1
+
+eclip_binding_k562:
+  <<: *base
+  species: human
+  dataset_name: eclip-binding-k562
+  # target_col: target_AATF
+  split_type: homology
+  # task: classification
+  num_classes: 1
+
+
+# ---------------- GLOBAL TASKS ---------------- #
+
+go_mf:
+  <<: *base
+  species: human
+  dataset_name: go-mf
+  target_col: target
+  split_type: homology
+  # task: multilabel
+  num_classes: 20
+
+mrl_sugimoto:
+  <<: *base
+  species: human
+  dataset_name: mrl-sugimoto
+  # target_col: target
+  split_type: homology
+  # task: regression
+  num_classes: 1
+
+mrl_hl_lbkwk:
+  <<: *base
+  dataset_name: mrl-hl-lbkwk
+  # target_col: target
+  split_type: default
+  # task: regression
+  num_classes: 1
+
+prot_loc:
+  <<: *base
+  species: human
+  dataset_name: prot-loc
+  # target_col: target
+  split_type: homology
+  # task: multilabel
+  num_classes: 12
+
+rnahl_mouse:
+  <<: *base
+  species: mouse
+  dataset_name: rnahl-mouse
+  # target_col: target
+  split_type: homology
+  # task: regression
+  num_classes: 1
+
+rnahl_human:
+  <<: *base
+  species: human
+  dataset_name: rnahl-human
+  # target_col: target
+  split_type: homology
+  # task: regression
+  num_classes: 1
+
+rna_loc_ietswaart:
+  <<: *base
+  species: human
+  dataset_name: rna-loc-ietswaart
+  # target_col: target
+  split_type: homology
+  # task: multilabel
+  num_classes: 3
+
+rna_loc_fazal:
+  <<: *base
+  species: human
+  dataset_name: rna-loc-fazal
+  # target_col: target
+  split_type: homology
+  # task: multilabel
+  num_classes: 8

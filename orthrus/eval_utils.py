@@ -10,9 +10,9 @@ from torchmetrics import Metric
 from torchmetrics.utilities import dim_zero_cat
 import pytorch_lightning as pl
 
-from rna_rep.mamba import MixerModel
-from rna_rep.saluki import SalukiModel
-from rna_rep.dilated_resnet import dilated_small, not_dilated_small
+from orthrus.mamba import MixerModel
+from orthrus.saluki import SalukiModel
+from orthrus.dilated_resnet import dilated_small, not_dilated_small
 
 
 def load_lightning_model(run_path: str, checkpoint_name: str) -> pl.LightningModule:
@@ -38,10 +38,10 @@ def load_lightning_model(run_path: str, checkpoint_name: str) -> pl.LightningMod
             configs[f"{name}_config"] = json.load(f)
 
     if configs["train_config"]["mask_prop"] > 0:
-        from rna_rep.mlm_model import ContrastiveLearningModel
+        from orthrus.mlm_model import ContrastiveLearningModel
         print("Loading Contrastive + MLM model")
     else:
-        from rna_rep.model import ContrastiveLearningModel
+        from orthrus.model import ContrastiveLearningModel
         print("Loading Contrastive only model")
 
     checkpoint_path = os.path.join(run_path, checkpoint_name)
