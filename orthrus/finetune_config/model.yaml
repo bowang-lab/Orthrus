@@ -1,0 +1,121 @@
+resnet_base: &resnet_base
+  model_class: "resnet"
+  dropout_prob: 0.3
+  pooling_layer: "max_pool"
+  kernel_size: 2
+  norm_type: "batchnorm"
+  add_shift: True
+  n_tracks: 6
+  global_pooling_layer: "dynamic_avgpool"
+  model_name: null
+  model_repository: null
+  run_name: null
+  run_path: null
+  checkpoint: null
+
+#### SALUKI ####
+saluki: &saluki
+  model_class: "saluki"
+  model_name: null
+  model_repository: null
+  run_name: null
+  run_path: null
+  checkpoint: null
+  add_shift: True
+
+saluki_no_shift:
+  <<: *saluki
+  add_shift: False
+
+#### RESNET ####
+
+dilated_resnet_mini:
+  <<: *resnet_base
+  layer_params: [2, 2]
+  dilation_params: [1, 2]
+  filter_nums: [64, 128]
+  increase_dilation: False
+  n_tracks: 6
+
+dilated_resnet_tiny:
+  <<: *resnet_base
+  layer_params: [2, 2, 2]
+  dilation_params: [1, 2, 4]
+  filter_nums: [64, 128, 128]
+  increase_dilation: False
+  n_tracks: 6
+
+dilated_resnet_small:
+  <<: *resnet_base
+  layer_params: [2, 2, 2, 2]
+  dilation_params: [1, 2, 4, 8]
+  filter_nums: [64, 128, 128, 256]
+  increase_dilation: False
+  n_tracks: 6
+
+not_dilated_resnet_small:
+  <<: *resnet_base
+  layer_params: [2, 2, 2, 2]
+  dilation_params: [1, 1, 1, 1]
+  filter_nums: [64, 128, 128, 256]
+  increase_dilation: False
+  n_tracks: 6
+
+dilated_resnet_large:
+  <<: *resnet_base
+  layer_params: [3, 4, 6, 3]
+  dilation_params: [1, 2, 4, 8]
+  filter_nums: [128, 256, 512, 512]
+  increase_dilation: True
+  n_tracks: 6
+
+not_dilated_resnet_large:
+  <<: *resnet_base
+  layer_params: [3, 4, 6, 3]
+  dilation_params: [1, 1, 1, 1]
+  filter_nums: [128, 256, 512, 512]
+  increase_dilation: False
+  n_tracks: 6
+
+#### Orthrus Models ####
+mamba_deep: &mamba_deep
+  model_class: "ssm"
+  ssm_model_dim: 512
+  ssm_n_layers: 6
+  freeze_layers:
+
+mamba_base: &mamba_base
+  model_class: "ssm"
+  ssm_model_dim: 256
+  ssm_n_layers: 3
+  freeze_layers:
+
+contrastive_only_deep:
+  <<: *mamba_deep
+  model_name: "orthrus_deep_new_toga_0_30_masking_ortho_0_80_underweight_6_track"
+  run_path: "/data1/morrisq/dalalt1/Orthrus/final_orthrus_models/orthrus_deep_new_toga_0_30_masking_ortho_0_80_underweight_6_track"
+  checkpoint: "epoch=6-step=20000.ckpt"
+
+contrastive_only_small:
+  <<: *mamba_base
+  model_name: "orthrus_base_new_toga_0_30_masking_ortho_0_80_underweight_6_track"
+  run_path: "/data1/morrisq/dalalt1/Orthrus/final_orthrus_models/orthrus_base_new_toga_0_30_masking_ortho_0_80_underweight_6_track"
+  checkpoint: "epoch=6-step=20000.ckpt"
+
+contrastive_and_mlm:
+  <<: *mamba_deep
+  model_name: "orthrus_deep_new_toga_0_15_masking_ortho_0_80_underweight_0_5_cl_loss_0_95_mlm_loss_6_track"
+  run_path: "/data1/morrisq/dalalt1/Orthrus/final_orthrus_models/orthrus_deep_new_toga_0_15_masking_ortho_0_80_underweight_0_5_cl_loss_0_95_mlm_loss_6_track"
+  checkpoint: "epoch=6-step=20000.ckpt"
+  
+hyena_dna_small: &hyena_dna_small
+  model_class: "hyenadna"
+  model_name: null
+  model_repository: '/fs01/home/phil/Documents/01_projects/rna_rep/rna_rep/hyena_dna/checkpoints'
+  run_name: 'hyenadna-small-32k-seqlen'
+
+hyena_dna_tiny: &hyena_dna_tiny
+  model_class: "hyenadna"
+  model_name: null
+  model_repository: '/fs01/home/phil/Documents/01_projects/rna_rep/rna_rep/hyena_dna/checkpoints'
+  run_name: 'hyenadna-tiny-1k-seqlen'

@@ -1,0 +1,53 @@
+default: &default
+  projection_body: 256
+  projection_norm_type: batchnorm
+  n_layers: 2
+  output_bias: True
+  output_sigmoid: False
+  random_init_layers:
+  zero_init_layers:
+
+default_ln: &default_ln
+  projection_body: 256
+  projection_norm_type: layernorm
+  n_layers: 2
+  output_bias: True
+  output_sigmoid: False
+  random_init_layers:
+  zero_init_layers:
+
+#### SALUKI ####
+
+saluki_projector:
+  <<: *default
+  representation_dim: 64
+  n_layers: 1
+
+#### DILATED RESNET ####
+
+dilated_resnet_mini_projector:
+  <<: *default
+  representation_dim: 128
+  n_layers: 2
+
+dilated_resnet_tiny_projector:
+  <<: *default
+  representation_dim: 128
+  n_layers: 2
+
+dilated_resnet_small_projector:
+  <<: *default
+  representation_dim: 256
+  n_layers: 2
+
+dilated_resnet_large_projector:
+  <<: *default
+  representation_dim: 512
+  n_layers: 2
+
+
+#### Mamba-based Models ####
+
+mamba_base_projector:
+  <<: *default
+  representation_dim: 256
