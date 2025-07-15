@@ -5,15 +5,14 @@ parts of the sequence and converting these parts into their one-hot
 encodings.
 
 """
-
 import pkg_resources
 import pyfaidx
 import tabix
 
 from functools import wraps
-from orthrus.sequence import Sequence
-from orthrus.sequence import sequence_to_encoding
-from orthrus.sequence import encoding_to_sequence
+from .sequence import Sequence
+from .sequence import sequence_to_encoding
+from .sequence import encoding_to_sequence
 
 
 def _not_blacklist_region(chrom, start, end, blacklist_tabix):
@@ -50,7 +49,12 @@ def _not_blacklist_region(chrom, start, end, blacklist_tabix):
     return True
 
 
-def _check_coords(len_chrs, chrom, start, end, pad=False, blacklist_tabix=None):
+def _check_coords(len_chrs,
+                  chrom,
+                  start,
+                  end,
+                  pad=False,
+                  blacklist_tabix=None):
     """
     Check if the input coordinates are valid.
 
@@ -80,27 +84,23 @@ def _check_coords(len_chrs, chrom, start, end, pad=False, blacklist_tabix=None):
 
 
     """
-    return (
-        chrom in len_chrs
-        and start < len_chrs[chrom]
-        and start < end
-        and end > 0
-        and (start >= 0 if not pad else True)
-        and (end <= len_chrs[chrom] if not pad else True)
-        and _not_blacklist_region(chrom, start, end, blacklist_tabix)
-    )
+    return chrom in len_chrs and \
+         start < len_chrs[chrom] and \
+         start < end and \
+         end > 0 and \
+         (start >= 0 if not pad else True) and \
+         (end <= len_chrs[chrom] if not pad else True) and \
+         _not_blacklist_region(chrom, start, end, blacklist_tabix)
 
 
-def _get_sequence_from_coords(
-    len_chrs,
-    genome_sequence,
-    chrom,
-    start,
-    end,
-    strand="+",
-    pad=False,
-    blacklist_tabix=None,
-):
+def _get_sequence_from_coords(len_chrs,
+                              genome_sequence,
+                              chrom,
+                              start,
+                              end,
+                              strand='+',
+                              pad=False,
+                              blacklist_tabix=None):
     """
     Gets the genomic sequence at the input coordinates.
 
@@ -140,15 +140,18 @@ def _get_sequence_from_coords(
 
     """
 
-    if not _check_coords(
-        len_chrs, chrom, start, end, pad=pad, blacklist_tabix=blacklist_tabix
-    ):
+    if not _check_coords(len_chrs,
+        chrom,
+        start,
+        end,
+        pad=pad,
+        blacklist_tabix=blacklist_tabix):
         return ""
 
-    if strand != "+" and strand != "-" and strand != ".":
+    if strand != '+' and strand != '-' and strand != '.':
         raise ValueError(
-            "Strand must be one of '+', '-', or '.'. Input was {0}".format(strand)
-        )
+            "Strand must be one of '+', '-', or '.'. Input was {0}".format(
+                strand))
 
     end_pad = 0
     start_pad = 0
@@ -158,11 +161,9 @@ def _get_sequence_from_coords(
     if start < 0:
         start_pad = -1 * start
         start = 0
-    return (
-        Genome.UNK_BASE * start_pad
-        + genome_sequence(chrom, start, end, strand)
-        + Genome.UNK_BASE * end_pad
-    )
+    return (Genome.UNK_BASE * start_pad +
+            genome_sequence(chrom, start, end, strand) +
+            Genome.UNK_BASE * end_pad)
 
 
 class Genome(Sequence):
@@ -209,7 +210,7 @@ class Genome(Sequence):
 
     """
 
-    BASES_ARR = ["A", "C", "G", "T"]
+    BASES_ARR = ['A', 'C', 'G', 'T']
     """
     This is an array with the alphabet (i.e. all possible symbols
     that may occur in a sequence). We expect that
@@ -218,21 +219,17 @@ class Genome(Sequence):
     """
 
     BASE_TO_INDEX = {
-        "A": 0,
-        "C": 1,
-        "G": 2,
-        "T": 3,
-        "a": 0,
-        "c": 1,
-        "g": 2,
-        "t": 3,
+        'A': 0, 'C': 1, 'G': 2, 'T': 3,
+        'a': 0, 'c': 1, 'g': 2, 't': 3,
     }
     """
     A dictionary mapping members of the alphabet (i.e. all
     possible symbols that can occur in a sequence) to integers.
     """
 
-    INDEX_TO_BASE = {0: "A", 1: "C", 2: "G", 3: "T"}
+    INDEX_TO_BASE = {
+        0: 'A', 1: 'C', 2: 'G', 3: 'T'
+    }
     """
     A dictionary mapping integers to members of the alphabet (i.e.
     all possible symbols that can occur in a sequence). We expect
@@ -241,16 +238,8 @@ class Genome(Sequence):
     """
 
     COMPLEMENTARY_BASE_DICT = {
-        "A": "T",
-        "C": "G",
-        "G": "C",
-        "T": "A",
-        "N": "N",
-        "a": "T",
-        "c": "G",
-        "g": "C",
-        "t": "A",
-        "n": "N",
+        'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N',
+        'a': 'T', 'c': 'G', 'g': 'C', 't': 'A', 'n': 'N'
     }
     """
     A dictionary mapping each base to its complementary base.
@@ -270,7 +259,7 @@ class Genome(Sequence):
         input_path: str,
         blacklist_regions: str = None,
         bases_order: list[str] = None,
-        init_unpicklable: bool = False,
+        init_unpicklable: bool = False
     ):
         """Constructs a `Genome` object."""
         self.input_path = input_path
@@ -283,8 +272,7 @@ class Genome(Sequence):
             lc_bases = [str.lower(b) for b in bases]
             self.BASE_TO_INDEX = {
                 **{b: ix for (ix, b) in enumerate(bases)},
-                **{b: ix for (ix, b) in enumerate(lc_bases)},
-            }
+                **{b: ix for (ix, b) in enumerate(lc_bases)}}
             self.INDEX_TO_BASE = {ix: b for (ix, b) in enumerate(bases)}
             self.update_bases_order(bases)
 
@@ -297,8 +285,7 @@ class Genome(Sequence):
         lc_bases = [str.lower(b) for b in bases]
         cls.BASE_TO_INDEX = {
             **{b: ix for (ix, b) in enumerate(bases)},
-            **{b: ix for (ix, b) in enumerate(lc_bases)},
-        }
+            **{b: ix for (ix, b) in enumerate(lc_bases)}}
         cls.INDEX_TO_BASE = {ix: b for (ix, b) in enumerate(bases)}
 
     def _unpicklable_init(self):
@@ -311,17 +298,16 @@ class Genome(Sequence):
             if self.blacklist_regions == "hg19":
                 self._blacklist_tabix = tabix.open(
                     pkg_resources.resource_filename(
-                        "selene_sdk", "sequences/data/hg19_blacklist_ENCFF001TDO.bed.gz"
-                    )
-                )
+                        "selene_sdk",
+                        "sequences/data/hg19_blacklist_ENCFF001TDO.bed.gz"))
             elif self.blacklist_regions == "hg38":
                 self._blacklist_tabix = tabix.open(
                     pkg_resources.resource_filename(
-                        "selene_sdk", "sequences/data/hg38.blacklist.bed.gz"
-                    )
-                )
+                        "selene_sdk",
+                        "sequences/data/hg38.blacklist.bed.gz"))
             elif self.blacklist_regions is not None:  # user-specified file
-                self._blacklist_tabix = tabix.open(self.blacklist_regions)
+                self._blacklist_tabix = tabix.open(
+                    self.blacklist_regions)
             self._initialized = True
 
     def init(func):
@@ -330,7 +316,6 @@ class Genome(Sequence):
         def dfunc(self, *args, **kwargs):
             self._unpicklable_init()
             return func(self, *args, **kwargs)
-
         return dfunc
 
     @init
@@ -363,8 +348,8 @@ class Genome(Sequence):
             len_chrs[chrom] = len(self.genome[chrom])
         return len_chrs
 
-    def _genome_sequence(self, chrom, start, end, strand="+"):
-        if strand == "+" or strand == ".":
+    def _genome_sequence(self, chrom, start, end, strand='+'):
+        if strand == '+' or strand == '.':
             return self.genome[chrom][start:end].seq
         else:
             return self.genome[chrom][start:end].reverse.complement.seq
@@ -392,12 +377,19 @@ class Genome(Sequence):
             in the input.
 
         """
-        return _check_coords(
-            self.len_chrs, chrom, start, end, blacklist_tabix=self._blacklist_tabix
-        )
+        return _check_coords(self.len_chrs,
+                             chrom,
+                             start,
+                             end,
+                             blacklist_tabix=self._blacklist_tabix)
 
     @init
-    def get_sequence_from_coords(self, chrom, start, end, strand="+", pad=False):
+    def get_sequence_from_coords(self,
+                                 chrom,
+                                 start,
+                                 end,
+                                 strand='+',
+                                 pad=False):
         """
         Gets the queried chromosome's sequence at the input coordinates.
 
@@ -435,19 +427,22 @@ class Genome(Sequence):
             choices.
 
         """
-        return _get_sequence_from_coords(
-            self.len_chrs,
-            self._genome_sequence,
-            chrom,
-            start,
-            end,
-            strand=strand,
-            pad=pad,
-            blacklist_tabix=self._blacklist_tabix,
-        )
+        return _get_sequence_from_coords(self.len_chrs,
+                                         self._genome_sequence,
+                                         chrom,
+                                         start,
+                                         end,
+                                         strand=strand,
+                                         pad=pad,
+                                         blacklist_tabix=self._blacklist_tabix)
 
     @init
-    def get_encoding_from_coords(self, chrom, start, end, strand="+", pad=False):
+    def get_encoding_from_coords(self,
+                                 chrom,
+                                 start,
+                                 end,
+                                 strand='+',
+                                 pad=False):
         """Gets the one-hot encoding of the genomic sequence at the
         queried coordinates.
 
@@ -489,15 +484,17 @@ class Genome(Sequence):
 
         """
         sequence = self.get_sequence_from_coords(
-            chrom, start, end, strand=strand, pad=pad
-        )
+            chrom, start, end, strand=strand, pad=pad)
         encoding = self.sequence_to_encoding(sequence)
         return encoding
 
     @init
-    def get_encoding_from_coords_check_unk(
-        self, chrom, start, end, strand="+", pad=False
-    ):
+    def get_encoding_from_coords_check_unk(self,
+                                 chrom,
+                                 start,
+                                 end,
+                                 strand='+',
+                                 pad=False):
         """Gets the one-hot encoding of the genomic sequence at the
         queried coordinates and check whether the sequence contains
         unknown base(s).
@@ -543,10 +540,10 @@ class Genome(Sequence):
             (Raised in the call to `self.get_sequence_from_coords`)
         """
         sequence = self.get_sequence_from_coords(
-            chrom, start, end, strand=strand, pad=pad
-        )
+            chrom, start, end, strand=strand, pad=pad)
         encoding = self.sequence_to_encoding(sequence)
         return encoding, self.UNK_BASE in sequence
+
 
     @classmethod
     def sequence_to_encoding(cls, sequence):

@@ -4,7 +4,49 @@ default: &default_optim
   projection_head_lr: 0.001
   projection_head_weight_decay: 0.0001
   max_weight_decay: -1
+  loss_fn: 'dcl'
   clipnorm: 5
+
+published: &published
+  model_lr: 0.001
+  model_weight_decay: 0.00005
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  max_weight_decay: -1
+  loss_fn: 'dcl'
+  clipnorm: 5
+
+underweight_ortho_self:
+  <<: *published
+  ortho_weight: 0.2
+  self_weight: 0.2
+
+underweight_ortho_self_0.5:
+  <<: *published
+  ortho_weight: 0.5
+  self_weight: 0.5
+
+underweight_ortho_self_0.8:
+  <<: *published
+  ortho_weight: 0.8
+  self_weight: 0.8
+
+underweight_ortho_0.8:
+  <<: *published
+  ortho_weight: 0.8
+
+underweight_ortho_0.7:
+  <<: *published
+  ortho_weight: 0.7
+
+
+dual_heads:
+  <<: *published
+  use_dual_heads: True
+
+lower_lr:
+  <<: *published
+  model_lr: 0.0001
 
 anneal:
   model_lr: 0.0005
@@ -12,6 +54,7 @@ anneal:
   projection_head_lr: 0.001
   projection_head_weight_decay: 0.0001
   max_weight_decay: 0.0001
+  loss_fn: 'dcl'
   clipnorm: 5
 
 grid:
@@ -20,6 +63,7 @@ grid:
   projection_head_lr: 0.001
   projection_head_weight_decay: 0.0001
   max_weight_decay: 0.0001
+  loss_fn: 'dcl'
   clipnorm: 5
 
 high_wd:
@@ -28,4 +72,49 @@ high_wd:
   projection_head_lr: 0.001
   projection_head_weight_decay: 0.0001
   max_weight_decay: 0.001
+  loss_fn: 'dcl'
   clipnorm: 5
+
+published_mlm_only:
+  model_lr: 0.001
+  model_weight_decay: 0.00005
+  projection_head_lr: 0.001
+  projection_head_weight_decay: 0.0001
+  max_weight_decay: -1
+  loss_fn: 'mlm'
+  clipnorm: 5
+
+hidden_dim_testing:
+  model_lr: 0.0002 # lower learning rate for larger model
+  model_weight_decay: 0.00001
+  projection_head_lr: 0.0002 # match model lr
+  projection_head_weight_decay: 0.00002
+  max_weight_decay: -1
+  loss_fn: 'dcl'
+  clipnorm: 3
+
+behemoth:
+  model_lr: 0.0001 # lower learning rate for larger model
+  model_weight_decay: 0.000005
+  projection_head_lr: 0.0001 # match model lr
+  projection_head_weight_decay: 0.00001
+  max_weight_decay: -1
+  loss_fn: 'dcl'
+  clipnorm: 3
+
+default_dino:
+  student_temperature: 0.1
+  teacher_temperature: 0.04
+  warmup_teacher_temperature: 0.01
+  warmup_teacher_temperature_epochs: 50
+  center_momentum: 0.9
+  model_lr: 0.000005
+  min_model_lr: 0.0000001
+  model_lr_warmup_epochs: 10
+  model_weight_decay: 0.04
+  max_model_weight_decay: 0.4
+  projection_head_weight_decay: 0
+  teacher_momentum: 0.99
+  freeze_projection_head_epochs: 1 #1
+  loss_fn: 'dino'
+  clipnorm: 3.0
