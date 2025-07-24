@@ -7,7 +7,7 @@ from torch.optim import AdamW, Adam
 from torchmetrics.classification import AUROC, Accuracy, AveragePrecision
 from orthrus.eval_utils import load_model, PearsonR, SpearmanR
 from orthrus.layers import ProjectionHead
-from orthrus.saluki import SalukiModel
+from orthrus.saluki import saluki_small
 from orthrus.dilated_resnet import DilatedResnet
 from orthrus.mamba import MixerModel
 
@@ -97,9 +97,10 @@ class RNATaskModel(pl.LightningModule):
                 self.pooling_length = 32
 
         elif model_class == "saluki":
-            self.model = SalukiModel(
+            self.model = saluki_small(
                 seq_depth=self.data_config["n_tracks"],
-                add_shift=self.model_config["add_shift"]
+                add_shift=self.model_config["add_shift"],
+                final_layer=False,
             )
 
         elif model_class == "ssm":
