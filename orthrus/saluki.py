@@ -1,9 +1,6 @@
 import torch
 import torch.nn as nn
 
-# --- Custom Layers Translated to PyTorch ---
-
-
 class StochasticShift(nn.Module):
     """
     Custom PyTorch module for stochastic sequence shifting during training.
@@ -63,10 +60,6 @@ class Scale(nn.Module):
 
     def forward(self, x):
         return x * self.scale
-
-
-# --- Main Model Components ---
-
 
 class SalukiConv1D(nn.Module):
     """
